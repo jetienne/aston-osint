@@ -53,12 +53,16 @@ chown -R deploy:deploy /opt/aston-osint
 
 echo "==> Configuring nginx"
 rm -f /etc/nginx/sites-enabled/default
+rm -f /etc/nginx/sites-enabled/aston-osint
+rm -f /etc/nginx/sites-available/aston-osint
 cp /opt/aston-osint/config/nginx.conf /etc/nginx/sites-available/aston-osint
 ln -sf /etc/nginx/sites-available/aston-osint /etc/nginx/sites-enabled/aston-osint
 sed -i "s/SF_DOMAIN/${SF_DOMAIN}/g" /etc/nginx/sites-available/aston-osint
 
-echo "==> Obtaining TLS certificate"
+echo "==> Testing nginx config before certbot"
 nginx -t && systemctl reload nginx
+
+echo "==> Obtaining TLS certificate"
 certbot --nginx -d "$SF_DOMAIN" --non-interactive --agree-tos -m "$CERT_EMAIL"
 
 echo "==> Configuring firewall"
