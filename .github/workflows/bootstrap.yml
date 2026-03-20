@@ -30,9 +30,11 @@ jobs:
           script: |
             curl -sL https://raw.githubusercontent.com/jetienne/aston-osint/main/scripts/bootstrap.sh | bash
 
-      - name: Save deploy private key as GitHub secret
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+      - name: Output deploy private key
         run: |
-          gh secret set SSH_PRIVATE_KEY --repo jetienne/aston-osint < deploy_key
-          echo "Deploy key saved as SSH_PRIVATE_KEY secret"
+          echo "============================================"
+          echo "DEPLOY PRIVATE KEY — copy this and save it"
+          echo "as the SSH_PRIVATE_KEY repository secret"
+          echo "============================================"
+          cat deploy_key
+          echo "============================================"

@@ -48,7 +48,6 @@ Go to **github.com/jetienne/aston-osint → Settings → Secrets and variables �
 | `CERT_EMAIL` | Email address | Used by Let's Encrypt for certificate notifications |
 | `SF_AUTH_USER` | Username | Choose any username for SpiderFoot basic auth |
 | `SF_AUTH_PASS` | Password | Choose a strong password for SpiderFoot basic auth |
-| `GH_PAT` | GitHub Personal Access Token | Create at github.com/settings/tokens — needs `repo` scope (the bootstrap uses it to auto-save the deploy key as a secret) |
 
 ## Deployment (Full GitOps)
 
@@ -63,7 +62,9 @@ This will:
 - Install Python 3, nginx, certbot, SpiderFoot
 - Create a `deploy` user with a freshly generated SSH keypair
 - Configure systemd, nginx reverse proxy, Let's Encrypt TLS, UFW firewall
-- Save the deploy private key as the `SSH_PRIVATE_KEY` GitHub secret automatically
+- Print the deploy private key in the workflow logs
+
+After bootstrap completes, copy the private key from the logs and add it as the `SSH_PRIVATE_KEY` repository secret. The deploy workflow uses this key to connect as the `deploy` user.
 
 ### Deploy (on demand)
 
