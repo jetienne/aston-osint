@@ -16,10 +16,6 @@ echo "==> Updating systemd service"
 sudo cp config/spiderfoot.service /etc/systemd/system/spiderfoot.service
 sudo systemctl daemon-reload
 
-echo "==> Updating nginx config"
-sudo cp config/nginx.conf /etc/nginx/sites-available/spiderfoot
-sudo sed -i "s/SF_DOMAIN/${SF_DOMAIN}/g" /etc/nginx/sites-available/spiderfoot
-
 echo "==> Updating basic auth"
 sudo htpasswd -cb /etc/nginx/.htpasswd "$SF_AUTH_USER" "$SF_AUTH_PASS"
 
