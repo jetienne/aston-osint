@@ -18,12 +18,11 @@ docker stop aston-osint 2>/dev/null || true
 docker rm aston-osint 2>/dev/null || true
 
 echo "==> Starting container"
-docker run -d \
-  --name aston-osint \
-  --restart unless-stopped \
-  --env-file /opt/aston-osint/.env \
-  -p 127.0.0.1:8000:8000 \
-  aston-osint
+DOCKER_ARGS="-d --name aston-osint --restart unless-stopped -p 127.0.0.1:8000:8000"
+if [ -f /opt/aston-osint/.env ]; then
+  DOCKER_ARGS="$DOCKER_ARGS --env-file /opt/aston-osint/.env"
+fi
+docker run $DOCKER_ARGS aston-osint
 
 echo "==> Reloading nginx"
 sudo nginx -t && sudo systemctl reload nginx
