@@ -1,3 +1,5 @@
+import asyncio
+
 from app.adapters.base import BaseAdapter
 from app.models import SourceMatch, SourceResult
 
@@ -7,14 +9,18 @@ class GDELTAdapter(BaseAdapter):
     BASE_URL = 'https://api.gdeltproject.org/api/v2'
 
     async def _search(self, query: str, **kwargs) -> SourceResult:
+        await asyncio.sleep(1)
+
         async with self._client() as client:
             resp = await client.get(
                 f'{self.BASE_URL}/doc/doc',
                 params={
-                    'query': query,
+                    'query': f'"{query}"',
                     'mode': 'artlist',
                     'format': 'json',
+                    'timespan': '3months',
                     'maxrecords': 10,
+                    'sort': 'DateDesc',
                 },
             )
             resp.raise_for_status()

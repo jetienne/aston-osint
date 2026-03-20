@@ -14,7 +14,8 @@ class PappersAdapter(BaseAdapter):
         async with self._client() as client:
             resp = await client.get(
                 f'{self.BASE_URL}/recherche',
-                params={'q': query, 'api_token': PAPPERS_API_KEY, 'par_page': 10},
+                params={'q': query, 'par_page': 10},
+                headers={'api-key': PAPPERS_API_KEY},
             )
             resp.raise_for_status()
             data = resp.json()
@@ -28,7 +29,6 @@ class PappersAdapter(BaseAdapter):
             beneficiaires = company.get('beneficiaires_effectifs', [])
 
             dirigeant_names = [d.get('nom_complet', '') for d in dirigeants[:5]]
-            beneficiaire_names = [b.get('nom_complet', '') for b in beneficiaires[:5]]
 
             matches.append(SourceMatch(
                 name=name,

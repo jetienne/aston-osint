@@ -7,30 +7,38 @@ class ICIJAdapter(BaseAdapter):
     BASE_URL = 'https://offshoreleaks.icij.org/api/v1'
 
     async def _search(self, query: str, **kwargs) -> SourceResult:
+        body = {
+            'queries': {
+                'q1': {
+                    'query': query,
+                    'type': 'Officer',
+                },
+            },
+        }
+
         async with self._client() as client:
-            resp = await client.get(
-                f'{self.BASE_URL}/search',
-                params={'q': query, 'limit': 10},
+            resp = await client.post(
+                f'{self.BASE_URL}/reconcile',
+                json=body,
             )
             resp.raise_for_status()
             data = resp.json()
 
         matches = []
-        results = data if isinstance(data, list) else data.get('results', data.get('data', []))
+        query_results = data.get('q1', {}).get('result', [])
 
-        for node in results:
-            if isinstance(node, dict):
-                name = node.get('name', node.get('entity', query))
-                node_type = node.get('type', node.get('node_type', 'entity'))
-                jurisdiction = node.get('jurisdiction', node.get('country_codes', ''))
-                source_id = node.get('sourceID', node.get('source', ''))
+        for node in query_results:
+            name = node.get('name', query)
+            score = node.get('score', 0)
+            node_id = node.get('id', '')
+            node_type = ', '.join(node.get('type', []))
 
-                matches.append(SourceMatch(
-                    name=name,
-                    type=node_type.lower() if isinstance(node_type, str) else 'entity',
-                    summary=f'{node_type} — jurisdiction: {jurisdiction}, source: {source_id}',
-                    url=f'https://offshoreleaks.icij.org/nodes/{node.get("id", node.get("node_id", ""))}',
-                    data=node,
-                ))
+            matches.append(SourceMatch(
+                name=name,
+                type='officer',
+                summary=f'Score: {score:.1f} — {node_type}',
+                url=f'https://offshoreleaks.icij.org/nodes/{node_id}',
+                data=node,
+            ))
 
         return SourceResult(source=self.name, query=query, matches=matches)

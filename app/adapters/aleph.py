@@ -10,7 +10,7 @@ class AlephAdapter(BaseAdapter):
         async with self._client() as client:
             resp = await client.get(
                 f'{self.BASE_URL}/entities',
-                params={'q': query, 'limit': 10},
+                params={'q': f'"{query}"', 'limit': 10},
             )
             resp.raise_for_status()
             data = resp.json()
@@ -18,7 +18,8 @@ class AlephAdapter(BaseAdapter):
         matches = []
         for result in data.get('results', []):
             properties = result.get('properties', {})
-            name = properties.get('name', [query])[0] if properties.get('name') else result.get('id', query)
+            names = properties.get('name', [])
+            name = names[0] if names else query
             schema = result.get('schema', 'Entity')
             collection = result.get('collection', {})
 
