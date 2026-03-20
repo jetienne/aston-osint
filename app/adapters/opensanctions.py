@@ -41,7 +41,7 @@ class OpenSanctionsAdapter(BaseAdapter):
 
         for result in query_results:
             score = result.get('score', 0)
-            if score < 0.5:
+            if score < 0.9:
                 continue
 
             properties = result.get('properties', {})
