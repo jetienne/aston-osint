@@ -8,21 +8,28 @@ fi
 
 SF_DOMAIN="${SF_DOMAIN:?Error: SF_DOMAIN environment variable is required}"
 CERT_EMAIL="${CERT_EMAIL:?Error: CERT_EMAIL environment variable is required}"
-SF_AUTH_USER="${SF_AUTH_USER:?Error: SF_AUTH_USER environment variable is required}"
-SF_AUTH_PASS="${SF_AUTH_PASS:?Error: SF_AUTH_PASS environment variable is required}"
 DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY:-}"
 REPO_URL="${REPO_URL:-https://github.com/jetienne/aston-osint.git}"
 
 echo "==> System update"
 apt update && apt upgrade -y
 
-echo "==> Installing dependencies"
-apt install -y python3 python3-pip python3-venv git nginx certbot python3-certbot-nginx apache2-utils curl
+echo "==> Installing base dependencies"
+apt install -y git nginx certbot python3-certbot-nginx curl ca-certificates
+
+echo "==> Installing Docker"
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
 echo "==> Creating deploy user"
 if ! id -u deploy &>/dev/null; then
   adduser --disabled-password --gecos "" deploy
   usermod -aG sudo deploy
+  usermod -aG docker deploy
   echo "deploy ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/deploy
 fi
 mkdir -p /home/deploy/.ssh
@@ -38,38 +45,17 @@ chown -R deploy:deploy /home/deploy/.ssh
 chmod 700 /home/deploy/.ssh
 chmod 600 /home/deploy/.ssh/authorized_keys
 
-echo "==> Cloning SpiderFoot"
-if [ ! -d /opt/spiderfoot ]; then
-  git clone https://github.com/smicallef/spiderfoot.git /opt/spiderfoot
-fi
-chown -R deploy:deploy /opt/spiderfoot
-
-echo "==> Installing SpiderFoot dependencies"
-python3 -m venv /opt/spiderfoot/venv
-/opt/spiderfoot/venv/bin/pip install -r /opt/spiderfoot/requirements.txt
-
 echo "==> Cloning aston-osint repo"
 if [ ! -d /opt/aston-osint ]; then
   git clone "$REPO_URL" /opt/aston-osint
 fi
 chown -R deploy:deploy /opt/aston-osint
 
-echo "==> Configuring systemd service"
-cp /opt/aston-osint/config/spiderfoot.service /etc/systemd/system/spiderfoot.service
-systemctl daemon-reload
-systemctl enable spiderfoot
-systemctl start spiderfoot
-
 echo "==> Configuring nginx"
 rm -f /etc/nginx/sites-enabled/default
-cp /opt/aston-osint/config/nginx.conf /etc/nginx/sites-available/spiderfoot
-ln -sf /etc/nginx/sites-available/spiderfoot /etc/nginx/sites-enabled/spiderfoot
-
-# Replace SF_DOMAIN placeholder in nginx config
-sed -i "s/SF_DOMAIN/${SF_DOMAIN}/g" /etc/nginx/sites-available/spiderfoot
-
-echo "==> Setting up basic auth"
-htpasswd -cb /etc/nginx/.htpasswd "$SF_AUTH_USER" "$SF_AUTH_PASS"
+cp /opt/aston-osint/config/nginx.conf /etc/nginx/sites-available/aston-osint
+ln -sf /etc/nginx/sites-available/aston-osint /etc/nginx/sites-enabled/aston-osint
+sed -i "s/SF_DOMAIN/${SF_DOMAIN}/g" /etc/nginx/sites-available/aston-osint
 
 echo "==> Obtaining TLS certificate"
 nginx -t && systemctl reload nginx
@@ -88,11 +74,11 @@ nginx -t && systemctl reload nginx
 
 echo "==> Health check"
 sleep 2
-if curl -sf -u "${SF_AUTH_USER}:${SF_AUTH_PASS}" "https://${SF_DOMAIN}" -o /dev/null; then
-  echo "==> SpiderFoot is running at https://${SF_DOMAIN}"
+if curl -sf "https://${SF_DOMAIN}" -o /dev/null; then
+  echo "==> Nginx is running at https://${SF_DOMAIN}"
 else
-  echo "Warning: Health check failed. SpiderFoot may still be starting up."
-  echo "Check with: systemctl status spiderfoot"
+  echo "Warning: Health check failed. Nginx may still be starting up."
+  echo "Check with: systemctl status nginx"
 fi
 
-echo "==> Bootstrap complete"
+echo "==> Setup complete"

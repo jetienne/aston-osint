@@ -1,4 +1,4 @@
-name: Deploy SpiderFoot
+name: Deploy
 
 on:
   workflow_dispatch:
@@ -14,9 +14,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: SF_DOMAIN,SF_AUTH_USER,SF_AUTH_PASS
+          envs: SF_DOMAIN
           script: bash /opt/aston-osint/scripts/deploy.sh
         env:
           SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
-          SF_AUTH_USER: ${{ secrets.SF_AUTH_USER }}
-          SF_AUTH_PASS: ${{ secrets.SF_AUTH_PASS }}

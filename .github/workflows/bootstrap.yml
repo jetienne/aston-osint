@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  bootstrap:
+  setup:
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -20,19 +20,15 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: root
           key: ${{ secrets.SSH_ROOT_KEY }}
-          envs: SF_DOMAIN,CERT_EMAIL,SF_AUTH_USER,SF_AUTH_PASS,DEPLOY_PUBLIC_KEY
+          envs: SF_DOMAIN,CERT_EMAIL,DEPLOY_PUBLIC_KEY
           script: |
             export SF_DOMAIN="${SF_DOMAIN}"
             export CERT_EMAIL="${CERT_EMAIL}"
-            export SF_AUTH_USER="${SF_AUTH_USER}"
-            export SF_AUTH_PASS="${SF_AUTH_PASS}"
             export DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY}"
             curl -sL https://raw.githubusercontent.com/jetienne/aston-osint/main/scripts/bootstrap.sh | bash
         env:
           SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
           CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
-          SF_AUTH_USER: ${{ secrets.SF_AUTH_USER }}
-          SF_AUTH_PASS: ${{ secrets.SF_AUTH_PASS }}
           DEPLOY_PUBLIC_KEY: ${{ steps.keygen.outputs.public_key }}
 
       - name: Output deploy private key

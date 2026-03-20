@@ -2,8 +2,6 @@
 set -euo pipefail
 
 SF_DOMAIN="${SF_DOMAIN:?Error: SF_DOMAIN environment variable is required}"
-SF_AUTH_USER="${SF_AUTH_USER:?Error: SF_AUTH_USER environment variable is required}"
-SF_AUTH_PASS="${SF_AUTH_PASS:?Error: SF_AUTH_PASS environment variable is required}"
 
 REPO_DIR="/opt/aston-osint"
 
@@ -12,25 +10,30 @@ cd "$REPO_DIR"
 git fetch origin main
 git reset --hard origin/main
 
-echo "==> Updating systemd service"
-sudo cp config/spiderfoot.service /etc/systemd/system/spiderfoot.service
-sudo systemctl daemon-reload
+echo "==> Building Docker image"
+docker build -t aston-osint .
 
-echo "==> Updating basic auth"
-sudo htpasswd -cb /etc/nginx/.htpasswd "$SF_AUTH_USER" "$SF_AUTH_PASS"
+echo "==> Stopping existing container"
+docker stop aston-osint 2>/dev/null || true
+docker rm aston-osint 2>/dev/null || true
 
-echo "==> Restarting SpiderFoot"
-sudo systemctl restart spiderfoot
+echo "==> Starting container"
+docker run -d \
+  --name aston-osint \
+  --restart unless-stopped \
+  --env-file /opt/aston-osint/.env \
+  -p 127.0.0.1:8000:8000 \
+  aston-osint
 
 echo "==> Reloading nginx"
 sudo nginx -t && sudo systemctl reload nginx
 
 echo "==> Health check"
-sleep 2
-if curl -sf -u "${SF_AUTH_USER}:${SF_AUTH_PASS}" "https://${SF_DOMAIN}" -o /dev/null; then
-  echo "==> Deploy successful — SpiderFoot running at https://${SF_DOMAIN}"
+sleep 3
+if curl -sf "https://${SF_DOMAIN}/health" -o /dev/null; then
+  echo "==> Deploy successful — Aston OSINT running at https://${SF_DOMAIN}"
 else
   echo "Error: Health check failed"
-  sudo systemctl status spiderfoot --no-pager
+  docker logs aston-osint --tail 20
   exit 1
 fi
