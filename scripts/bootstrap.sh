@@ -45,10 +45,8 @@ chown -R deploy:deploy /home/deploy/.ssh
 chmod 700 /home/deploy/.ssh
 chmod 600 /home/deploy/.ssh/authorized_keys
 
-echo "==> Cloning aston-osint repo"
-if [ -d /opt/aston-osint ]; then
-  cd /opt/aston-osint && git fetch origin main && git reset --hard origin/main
-else
+echo "==> Ensuring aston-osint repo is present"
+if [ ! -d /opt/aston-osint ]; then
   git clone "$REPO_URL" /opt/aston-osint
 fi
 chown -R deploy:deploy /opt/aston-osint
@@ -62,7 +60,8 @@ ln -sf /etc/nginx/sites-available/aston-osint /etc/nginx/sites-enabled/aston-osi
 sed -i "s/SF_DOMAIN/${SF_DOMAIN}/g" /etc/nginx/sites-available/aston-osint
 
 echo "==> Testing nginx config before certbot"
-nginx -t && systemctl reload nginx
+nginx -t
+systemctl reload nginx
 
 echo "==> Obtaining TLS certificate"
 certbot --nginx -d "$SF_DOMAIN" --non-interactive --agree-tos -m "$CERT_EMAIL"

@@ -14,7 +14,10 @@ jobs:
           ssh-keygen -t ed25519 -f deploy_key -N "" -q
           echo "public_key=$(cat deploy_key.pub)" >> "$GITHUB_OUTPUT"
 
-      - name: Setup server via SSH as root
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Copy bootstrap script to server and run
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -25,7 +28,10 @@ jobs:
             export SF_DOMAIN="${SF_DOMAIN}"
             export CERT_EMAIL="${CERT_EMAIL}"
             export DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY}"
-            curl -sL https://raw.githubusercontent.com/jetienne/aston-osint/main/scripts/bootstrap.sh | bash
+            # Force re-clone to get latest config files
+            rm -rf /opt/aston-osint
+            git clone https://github.com/jetienne/aston-osint.git /opt/aston-osint
+            bash /opt/aston-osint/scripts/bootstrap.sh
         env:
           SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
           CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
