@@ -36,15 +36,15 @@ No SSH required. You set up 3 things manually, then GitHub Actions handles every
 
 Add a DNS A record pointing your chosen domain to the server IP. Wait for propagation before running the bootstrap.
 
-### 3. Add GitHub Secrets
+### 3. Add Environment Secrets
 
-Go to **github.com/jetienne/aston-osint → Settings → Secrets and variables → Actions** and add:
+Go to **github.com/jetienne/aston-osint → Settings → Environments → New environment**, create `production`, then add these secrets:
 
 | Secret | What to put | How to get it |
 |---|---|---|
 | `SSH_ROOT_KEY` | Root SSH private key | The private key matching the public key you added at VPS creation |
 | `SSH_HOST` | Server IP address | Hetzner dashboard → your server → Networking |
-| `SF_DOMAIN` | Your domain | The domain you pointed in step 2 (e.g. `osint.aston.com`) |
+| `SF_DOMAIN` | Your domain | The domain you pointed in step 2 (e.g. `osint.aston.app`) |
 | `CERT_EMAIL` | Email address | Used by Let's Encrypt for certificate notifications |
 | `SF_AUTH_USER` | Username | Choose any username for SpiderFoot basic auth |
 | `SF_AUTH_PASS` | Password | Choose a strong password for SpiderFoot basic auth |
@@ -64,7 +64,7 @@ This will:
 - Configure systemd, nginx reverse proxy, Let's Encrypt TLS, UFW firewall
 - Print the deploy private key in the workflow logs
 
-After bootstrap completes, copy the private key from the logs and add it as the `SSH_PRIVATE_KEY` repository secret. The deploy workflow uses this key to connect as the `deploy` user.
+After bootstrap completes, copy the private key from the logs and add it as the `SSH_PRIVATE_KEY` secret in the `production` environment. The deploy workflow uses this key to connect as the `deploy` user.
 
 ### Deploy (on demand)
 

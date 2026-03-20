@@ -6,6 +6,7 @@ on:
 jobs:
   bootstrap:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Generate deploy SSH keypair
         id: keygen
@@ -34,7 +35,8 @@ jobs:
         run: |
           echo "============================================"
           echo "DEPLOY PRIVATE KEY — copy this and save it"
-          echo "as the SSH_PRIVATE_KEY repository secret"
+          echo "as the SSH_PRIVATE_KEY environment secret"
+          echo "in the 'production' environment"
           echo "============================================"
           cat deploy_key
           echo "============================================"
