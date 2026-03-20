@@ -1,4 +1,4 @@
-name: Bootstrap Server
+name: Setup VPS
 
 on:
   workflow_dispatch:

@@ -53,9 +53,9 @@ Go to **github.com/jetienne/aston-osint → Settings → Environments → New en
 
 Both workflows are triggered manually from the **Actions** tab.
 
-### Bootstrap (once)
+### Setup VPS (once)
 
-Go to **Actions → Bootstrap Server → Run workflow**.
+Go to **Actions → Setup VPS → Run workflow**.
 
 This will:
 - SSH as root into the server
@@ -64,7 +64,7 @@ This will:
 - Configure systemd, nginx reverse proxy, Let's Encrypt TLS, UFW firewall
 - Print the deploy private key in the workflow logs
 
-After bootstrap completes, copy the private key from the logs and add it as the `SSH_PRIVATE_KEY` secret in the `production` environment. The deploy workflow uses this key to connect as the `deploy` user.
+After setup completes, copy the private key from the logs and add it as the `SSH_PRIVATE_KEY` secret in the `production` environment. The deploy workflow uses this key to connect as the `deploy` user.
 
 ### Deploy (on demand)
 
