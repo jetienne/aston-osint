@@ -10,14 +10,13 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
-        env:
-          SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
-          SF_AUTH_USER: ${{ secrets.SF_AUTH_USER }}
-          SF_AUTH_PASS: ${{ secrets.SF_AUTH_PASS }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script_stop: true
           envs: SF_DOMAIN,SF_AUTH_USER,SF_AUTH_PASS
           script: bash /opt/aston-osint/scripts/deploy.sh
+        env:
+          SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
+          SF_AUTH_USER: ${{ secrets.SF_AUTH_USER }}
+          SF_AUTH_PASS: ${{ secrets.SF_AUTH_PASS }}

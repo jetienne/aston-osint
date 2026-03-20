@@ -14,22 +14,26 @@ jobs:
           ssh-keygen -t ed25519 -f deploy_key -N "" -q
           echo "public_key=$(cat deploy_key.pub)" >> "$GITHUB_OUTPUT"
 
-      - name: Bootstrap server via SSH as root
+      - name: Setup server via SSH as root
         uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          key: ${{ secrets.SSH_ROOT_KEY }}
+          envs: SF_DOMAIN,CERT_EMAIL,SF_AUTH_USER,SF_AUTH_PASS,DEPLOY_PUBLIC_KEY
+          script: |
+            export SF_DOMAIN="${SF_DOMAIN}"
+            export CERT_EMAIL="${CERT_EMAIL}"
+            export SF_AUTH_USER="${SF_AUTH_USER}"
+            export SF_AUTH_PASS="${SF_AUTH_PASS}"
+            export DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY}"
+            curl -sL https://raw.githubusercontent.com/jetienne/aston-osint/main/scripts/bootstrap.sh | bash
         env:
           SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
           CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
           SF_AUTH_USER: ${{ secrets.SF_AUTH_USER }}
           SF_AUTH_PASS: ${{ secrets.SF_AUTH_PASS }}
           DEPLOY_PUBLIC_KEY: ${{ steps.keygen.outputs.public_key }}
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: root
-          key: ${{ secrets.SSH_ROOT_KEY }}
-          script_stop: true
-          envs: SF_DOMAIN,CERT_EMAIL,SF_AUTH_USER,SF_AUTH_PASS,DEPLOY_PUBLIC_KEY
-          script: |
-            curl -sL https://raw.githubusercontent.com/jetienne/aston-osint/main/scripts/bootstrap.sh | bash
 
       - name: Output deploy private key
         run: |
