@@ -15,6 +15,8 @@ jobs:
           username: root
           key: ${{ secrets.SSH_ROOT_KEY }}
           envs: SF_DOMAIN
-          script: bash /opt/aston-osint/scripts/deploy.sh
+          script: |
+            git config --global --add safe.directory /opt/aston-osint
+            bash /opt/aston-osint/scripts/deploy.sh
         env:
           SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
