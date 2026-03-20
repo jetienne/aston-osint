@@ -46,7 +46,9 @@ chmod 700 /home/deploy/.ssh
 chmod 600 /home/deploy/.ssh/authorized_keys
 
 echo "==> Cloning aston-osint repo"
-if [ ! -d /opt/aston-osint ]; then
+if [ -d /opt/aston-osint ]; then
+  cd /opt/aston-osint && git fetch origin main && git reset --hard origin/main
+else
   git clone "$REPO_URL" /opt/aston-osint
 fi
 chown -R deploy:deploy /opt/aston-osint
