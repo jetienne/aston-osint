@@ -19,43 +19,65 @@ Standard CRM enrichment tools don't work for UHNW clients. Their wealth sits acr
 - **Reverse Proxy:** Nginx + Let's Encrypt HTTPS (auto-renewing)
 - **Auth:** Basic auth via passwd file
 - **Process Manager:** systemd (auto-restart)
-- **CI/CD:** GitHub Actions — `git push main` triggers automated deployment
+- **CI/CD:** GitHub Actions — manual trigger (switchable to push-to-main later)
 - **Firewall:** UFW (ports 22, 80, 443 only; SpiderFoot port 5001 blocked externally)
+
+## Setup (one-time, manual)
+
+No SSH required. You set up 3 things manually, then GitHub Actions handles everything else.
+
+### 1. Create Hetzner VPS
+
+- OS: Ubuntu 24.04 LTS
+- Add your SSH public key at creation time (Hetzner UI lets you do this)
+- Note the server IP
+
+### 2. Point your domain
+
+Add a DNS A record pointing your chosen domain to the server IP. Wait for propagation before running the bootstrap.
+
+### 3. Add GitHub Secrets
+
+Go to **github.com/jetienne/aston-osint → Settings → Secrets and variables → Actions** and add:
+
+| Secret | What to put | How to get it |
+|---|---|---|
+| `SSH_ROOT_KEY` | Root SSH private key | The private key matching the public key you added at VPS creation |
+| `SSH_HOST` | Server IP address | Hetzner dashboard → your server → Networking |
+| `SF_DOMAIN` | Your domain | The domain you pointed in step 2 (e.g. `osint.aston.com`) |
+| `CERT_EMAIL` | Email address | Used by Let's Encrypt for certificate notifications |
+| `SF_AUTH_USER` | Username | Choose any username for SpiderFoot basic auth |
+| `SF_AUTH_PASS` | Password | Choose a strong password for SpiderFoot basic auth |
+| `GH_PAT` | GitHub Personal Access Token | Create at github.com/settings/tokens — needs `repo` scope (the bootstrap uses it to auto-save the deploy key as a secret) |
 
 ## Deployment (Full GitOps)
 
-No manual SSH required. Everything runs through GitHub Actions.
+Both workflows are triggered manually from the **Actions** tab.
 
-### GitHub Secrets Required
+### Bootstrap (once)
 
-| Secret | Description |
-|---|---|
-| `SSH_ROOT_KEY` | Root SSH private key (Hetzner sets this at VPS creation) |
-| `SSH_HOST` | Server IP |
-| `SF_DOMAIN` | Domain pointed to the server |
-| `CERT_EMAIL` | Email for Let's Encrypt registration |
-| `SF_AUTH_USER` | Basic auth username |
-| `SF_AUTH_PASS` | Basic auth password |
-| `GH_PAT` | GitHub PAT with repo secrets write access (for deploy key auto-setup) |
+Go to **Actions → Bootstrap Server → Run workflow**.
 
-### Initial Setup (once)
+This will:
+- SSH as root into the server
+- Install Python 3, nginx, certbot, SpiderFoot
+- Create a `deploy` user with a freshly generated SSH keypair
+- Configure systemd, nginx reverse proxy, Let's Encrypt TLS, UFW firewall
+- Save the deploy private key as the `SSH_PRIVATE_KEY` GitHub secret automatically
 
-1. Create Hetzner VPS — Ubuntu 24.04 LTS, add SSH public key at creation
-2. Point your domain (A record) to the server IP
-3. Add the GitHub Secrets listed above
-4. Push to `main` so the workflows are available
-5. Go to **Actions → Bootstrap Server → Run workflow**
+### Deploy (on demand)
 
-The bootstrap workflow SSHs as root, installs everything, generates a deploy keypair, and saves the deploy private key as the `SSH_PRIVATE_KEY` secret automatically.
+Go to **Actions → Deploy SpiderFoot → Run workflow**.
 
-### On Every Push to Main
+This will:
+- SSH as `deploy` user into the server
+- Pull latest code from the repo
+- Copy updated config files (nginx, systemd)
+- Write the SpiderFoot passwd file from secrets
+- Reload nginx and restart the SpiderFoot service
+- Verify the service is running and HTTPS is responding
 
-GitHub Actions connects via SSH as `deploy` user and runs `deploy.sh`, which:
-- Pulls latest code
-- Copies updated config files (nginx, systemd)
-- Writes SpiderFoot passwd file from secrets
-- Reloads nginx and restarts the SpiderFoot service
-- Verifies the service is running and HTTPS is responding
+Once stable, the deploy workflow can be switched to trigger on every push to main.
 
 ## How It Works
 
