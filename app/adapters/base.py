@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 
 import httpx
 
+import re
+
 from app.config import HTTP_TIMEOUT, HTTP_USER_AGENT
 from app.models import SourceResult
 
@@ -28,7 +30,7 @@ class BaseAdapter(ABC):
                 source=self.name,
                 query=query,
                 duration_ms=int((time.monotonic() - start) * 1000),
-                error=str(e),
+                error=re.sub(r'api_token=[^&\s]+', 'api_token=***', str(e)),
             )
 
     @abstractmethod

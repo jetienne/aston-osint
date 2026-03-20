@@ -14,8 +14,7 @@ class PappersAdapter(BaseAdapter):
         async with self._client() as client:
             resp = await client.get(
                 f'{self.BASE_URL}/recherche',
-                params={'q': query, 'par_page': 10},
-                headers={'api-key': PAPPERS_API_KEY},
+                params={'q': query, 'par_page': 10, 'api_token': PAPPERS_API_KEY},
             )
             resp.raise_for_status()
             data = resp.json()
