@@ -5,13 +5,162 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aston OSINT</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 80px auto; padding: 0 20px; color: #1a1a1a; }
-    h1 { font-size: 1.5rem; }
-    p { color: #666; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }
+    h1 { font-size: 1.4rem; margin-bottom: 24px; }
+    form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    label { font-size: 0.85rem; font-weight: 500; color: #555; }
+    input, textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
+    input:focus, textarea:focus { outline: none; border-color: #333; }
+    textarea { resize: vertical; min-height: 60px; }
+    button { padding: 10px 20px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
+    button:hover { background: #333; }
+    button:disabled { background: #999; cursor: wait; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    #status { margin-bottom: 24px; font-size: 0.85rem; color: #888; }
+    #results { font-family: 'SF Mono', Monaco, monospace; font-size: 0.8rem; background: #f5f5f5; padding: 16px; border-radius: 6px; display: none; max-height: 600px; overflow-y: auto; line-height: 1.5; }
   </style>
 </head>
 <body>
   <h1>Aston OSINT</h1>
-  <p>Intelligence pipeline is running. Scan form coming soon.</p>
+
+  <form id="scan-form">
+    <div class="field">
+      <label for="name">Full name *</label>
+      <input type="text" id="name" name="name" required placeholder="e.g. Viktor Vekselberg">
+    </div>
+    <div class="row">
+      <div>
+        <label for="nationality">Nationality / country</label>
+        <input type="text" id="nationality" name="nationality" placeholder="e.g. Russia">
+      </div>
+      <div>
+        <label for="company">Known company</label>
+        <input type="text" id="company" name="company" placeholder="e.g. Renova Group">
+      </div>
+    </div>
+    <div class="field">
+      <label for="hints">Additional hints</label>
+      <textarea id="hints" name="hints" placeholder="Any context that might help the search..."></textarea>
+    </div>
+    <button type="submit" id="submit-btn">Run scan</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="results"></div>
+
+  <script>
+    const form = document.getElementById('scan-form');
+    const btn = document.getElementById('submit-btn');
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      if (!name) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Scanning...';
+      statusEl.textContent = 'Querying 5 sources in parallel...';
+      resultsEl.style.display = 'none';
+      resultsEl.textContent = '';
+
+      try {
+        const body = { name };
+        const nationality = document.getElementById('nationality').value.trim();
+        const company = document.getElementById('company').value.trim();
+        const hints = document.getElementById('hints').value.trim();
+        if (nationality) body.nationality = nationality;
+        if (company) body.company = company;
+        if (hints) body.hints = hints;
+
+        const resp = await fetch('/api/v1/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        const data = await resp.json();
+        statusEl.textContent = '';
+        resultsEl.style.display = 'block';
+        renderResults(data);
+      } catch (err) {
+        statusEl.textContent = 'Error: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run scan';
+      }
+    });
+
+    function renderResults(data) {
+      resultsEl.textContent = '';
+
+      for (const source of data.sources) {
+        const block = document.createElement('div');
+        block.style.marginBottom = '16px';
+
+        const header = document.createElement('div');
+        header.style.fontWeight = '700';
+        header.style.marginBottom = '4px';
+        header.textContent = source.source.toUpperCase() + ' (' + source.duration_ms + 'ms)';
+        block.appendChild(header);
+
+        if (source.error) {
+          const err = document.createElement('div');
+          err.style.color = '#c00';
+          err.textContent = 'Error: ' + source.error;
+          block.appendChild(err);
+        } else if (source.matches.length === 0) {
+          const empty = document.createElement('div');
+          empty.style.color = '#999';
+          empty.textContent = 'No matches';
+          block.appendChild(empty);
+        } else {
+          for (const m of source.matches) {
+            const match = document.createElement('div');
+            match.style.marginLeft = '12px';
+            match.style.marginBottom = '6px';
+
+            const nameEl = document.createElement('div');
+            nameEl.style.fontWeight = '600';
+            nameEl.textContent = m.name + ' (' + m.type + ')';
+            match.appendChild(nameEl);
+
+            const summary = document.createElement('div');
+            summary.style.color = '#555';
+            summary.textContent = m.summary;
+            match.appendChild(summary);
+
+            if (m.url) {
+              const link = document.createElement('a');
+              link.href = m.url;
+              link.target = '_blank';
+              link.rel = 'noopener';
+              link.textContent = m.url;
+              link.style.color = '#06c';
+              link.style.fontSize = '0.75rem';
+              match.appendChild(link);
+            }
+
+            block.appendChild(match);
+          }
+        }
+
+        resultsEl.appendChild(block);
+      }
+
+      const meta = document.createElement('div');
+      meta.style.cssText = 'color:#999;font-size:0.75rem;margin-top:12px;border-top:1px solid #ddd;padding-top:8px;';
+      meta.textContent = 'Sources hit: ' + data.sources_hit.join(', ');
+      if (data.sources_failed.length) {
+        meta.textContent += ' | Failed: ' + data.sources_failed.join(', ');
+      }
+      meta.textContent += ' | Total: ' + data.duration_ms + 'ms';
+      resultsEl.appendChild(meta);
+    }
+  </script>
 </body>
 </html>
