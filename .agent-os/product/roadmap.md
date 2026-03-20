@@ -2,128 +2,108 @@
 
 ## Phase 1: GitOps Infrastructure
 
-**Goal:** Deploy SpiderFoot on Hetzner VPS with fully automated GitOps workflow
-**Success Criteria:** git push to main deploys in under 60 seconds; SpiderFoot UI and API accessible via HTTPS with basic auth
+**Goal:** Deploy a Docker-based FastAPI service on Hetzner VPS with GitOps workflow
+**Success Criteria:** git push + manual workflow trigger deploys in under 90 seconds; API responds on HTTPS with API key auth
 
 ### Features
 
-- [ ] Bootstrap script (system deps, deploy user, SpiderFoot install) `M`
-- [ ] systemd service configuration (auto-restart, logging) `S`
+- [ ] Dockerfile for FastAPI service `S`
+- [ ] Setup VPS workflow (system deps, Docker, deploy user, nginx, certbot) `M`
+- [ ] Deploy workflow (docker build, restart, health check) `M`
 - [ ] Nginx reverse proxy with Let's Encrypt HTTPS `S`
-- [ ] Basic auth via passwd file `XS`
-- [ ] GitHub Actions deploy workflow (SSH + deploy.sh) `M`
-- [ ] Firewall hardening (UFW: block port 5001 externally) `XS`
-- [ ] Deploy verification (health check in CI) `S`
+- [ ] API key authentication middleware `XS`
+- [ ] Firewall hardening (UFW: 22, 80, 443 only) `XS`
 
 ### Dependencies
 
 - Hetzner VPS provisioned with Ubuntu 24.04 LTS
-- SSH key added at VPS creation
-- GitHub Secrets configured (SSH key, host, domain, auth credentials)
+- GitHub environment secrets configured
 
-## Phase 2: OSINT Module Configuration
+## Phase 2: Source Adapters
 
-**Goal:** Configure SpiderFoot modules with relevant API keys for UHNW profiling
-**Success Criteria:** A test scan on a known name returns structured results from at least 3 data sources
+**Goal:** Build async adapters for all 5 data sources with normalised output
+**Success Criteria:** Each adapter returns structured results or a clean timeout within 30 seconds
 
 ### Features
 
-- [ ] OpenCorporates API key integration `XS`
-- [ ] Pappers API key integration `XS`
-- [ ] Exa.ai API key integration `XS`
-- [ ] IntelX API key integration `XS`
-- [ ] Module selection tuning for UHNW profiles `S`
-- [ ] Test scan validation and result quality review `S`
+- [ ] Base adapter interface (async, 30s timeout, normalised output) `S`
+- [ ] OCCRP Aleph adapter `M`
+- [ ] OpenSanctions adapter `M`
+- [ ] ICIJ OffshoreLeaks adapter `S`
+- [ ] Pappers adapter `S`
+- [ ] GDELT adapter `S`
+- [ ] Parallel fan-out orchestrator (asyncio.gather) `S`
 
 ### Dependencies
 
 - Phase 1 complete
-- API keys obtained for each service
+- API keys for OpenSanctions and Pappers (free tier)
 
-## Phase 3: Simple Async API
+## Phase 3: Claude Synthesis & Report Generation
 
-**Goal:** Expose a minimal API that wraps SpiderFoot — submit a query, poll for results
-**Success Criteria:** POST a target, receive a scan ID, GET results when ready; consumers decide how to use it
+**Goal:** Aggregate source results and produce AI-synthesised intelligence briefs as PDF and JSON
+**Success Criteria:** POST /api/v1/scan returns a structured brief with risk score and downloadable PDF in under 90 seconds
 
 ### Features
 
-- [ ] POST /scans — submit a target (name, domain, company), returns scan ID `S`
-- [ ] GET /scans/:id — poll scan status (pending, running, complete, failed) `S`
-- [ ] GET /scans/:id/results — retrieve raw SpiderFoot results when complete `S`
-- [ ] API authentication (API key or basic auth) `XS`
-- [ ] Lightweight wrapper service (Flask or FastAPI) over SpiderFoot REST API `M`
+- [ ] Claude synthesis prompt (aggregated JSON to structured UHNW brief) `M`
+- [ ] Intelligence brief JSON schema (identity, entities, sanctions, offshore, press, risk score) `S`
+- [ ] HTML report template `M`
+- [ ] WeasyPrint PDF generation `S`
+- [ ] POST /api/v1/scan endpoint (full pipeline: sources → Claude → PDF) `M`
 
 ### Dependencies
 
 - Phase 2 complete
+- Claude API access (Anthropic API key)
 
-## Phase 4: AI Synthesis & Report Generation
+## Phase 4: Ops Web Form
 
-**Goal:** Feed scan results through Claude to produce structured UHNW prospect reports
-**Success Criteria:** GET /scans/:id/report returns an AI-synthesized intelligence brief
+**Goal:** Provide a simple web interface for non-technical ops staff to run scans
+**Success Criteria:** Ops user enters a name in a browser form, receives a PDF download
 
 ### Features
 
-- [ ] Claude synthesis prompt (SpiderFoot JSON to structured UHNW brief) `M`
-- [ ] GET /scans/:id/report — returns AI-synthesized report `S`
-- [ ] Report formatting (markdown / HTML) `S`
-- [ ] PDF export option `M`
+- [ ] Single-page HTML form (name, nationality, company, hints, output format) `S`
+- [ ] Form submission to POST /api/v1/scan `XS`
+- [ ] Inline PDF display or download trigger `S`
+- [ ] Loading state and error handling `XS`
+- [ ] Served by nginx at root path (no build step) `XS`
 
 ### Dependencies
 
 - Phase 3 complete
-- Claude API access
 
-## Phase 5: Compliance & Network Intelligence
+## Phase 5: Aston Platform Integration (Future)
 
-**Goal:** Add automated compliance screening and network-based prospect discovery
-**Success Criteria:** Compliance report generated per scan; network graph surfaces at least 2 connected prospects per target
+**Goal:** Connect Aston Rails app to OSINT pipeline
+**Success Criteria:** New client creation in Aston triggers an automatic scan
 
 ### Features
 
-- [ ] PEP screening automation `M`
-- [ ] Sanctions list cross-referencing (OFAC, EU) `M`
-- [ ] Adverse media check pipeline `M`
-- [ ] Beneficial ownership chain resolution `L`
-- [ ] Network mapping (co-directors, co-investors, family) `L`
-- [ ] Timing signal detection (liquidity events) `M`
+- [ ] Aston calls POST /api/v1/scan on new client creation `M`
+- [ ] Scan history: SQLite log of all scans with timestamps `S`
+- [ ] JSON response stored and displayed in Aston UI `M`
 
 ### Dependencies
 
 - Phase 4 complete
-- Access to PEP and sanctions databases
-
-## Phase 6: Aston Platform Integration (Future)
-
-**Goal:** Connect Aston Rails app to OSINT platform if volume and workflow justify it
-**Success Criteria:** Aston user submits a name via in-app form, receives a report within the Aston UI
-
-### Features
-
-- [ ] Rails wrapper: form to POST /api/scan/new `M`
-- [ ] Result storage and retrieval in Aston `S`
-- [ ] In-app report display `M`
-
-### Dependencies
-
-- Phase 5 complete
 - Decision to integrate (DEC-TBD)
 
-## Phase 7: Scale, Compliance & Enterprise
+## Phase 6: Monitoring & Extended Sources (Future)
 
-**Goal:** Production hardening, RGPD compliance, and multi-user access
-**Success Criteria:** Platform passes internal compliance audit; supports concurrent users with role-based access
+**Goal:** Add re-screening, alerting, and additional data sources
+**Success Criteria:** Scheduled re-scans detect changes; alerts sent on HIGH/CRITICAL risk
 
 ### Features
 
+- [ ] Scheduled re-screening against updated sanctions lists `L`
+- [ ] Slack/email alert on HIGH or CRITICAL risk score `M`
+- [ ] Companies House UK adapter `S`
+- [ ] OpenCorporates adapter `M`
 - [ ] RGPD compliance review and data retention policy `L`
-- [ ] Legitimate interest documentation `M`
-- [ ] Role-based access control `M`
-- [ ] Audit logging for all scans and report access `M`
-- [ ] Automated scan scheduling for portfolio monitoring `L`
-- [ ] Performance optimization for concurrent scans `M`
+- [ ] Audit logging for all scans `M`
 
 ### Dependencies
 
-- Phase 6 complete (or standalone if integration deferred)
-- Legal review of RGPD obligations
+- Phase 5 complete (or standalone if integration deferred)

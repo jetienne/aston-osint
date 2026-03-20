@@ -1,19 +1,24 @@
 # Technical Stack
 
-OSINT Engine: SpiderFoot (Python, self-hosted)
-Runtime: Python 3 + pip
-Operating System: Ubuntu 24.04 LTS
-Server Provider: Hetzner VPS
+Language: Python 3.12+
+Web Framework: FastAPI
+Async Runtime: asyncio (parallel source queries)
+HTTP Client: httpx (async)
+PDF Generation: WeasyPrint
+AI Synthesis: Claude API (Anthropic SDK)
+Containerisation: Docker
+Server: Hetzner VPS, Ubuntu 24.04 LTS
 Reverse Proxy: Nginx
 TLS Certificates: Let's Encrypt via Certbot (auto-renewing)
-Authentication: Basic auth via passwd file
-Process Manager: systemd (Restart=always)
-CI/CD Platform: GitHub Actions
-CI/CD Trigger: Push to main branch
-Deployment Method: SSH + deploy script (GitOps)
+Authentication: API key (header-based)
+CI/CD Platform: GitHub Actions (manual trigger, workflow_dispatch)
+Deployment Method: Docker build + SSH deploy
 Code Repository: git@github.com:jetienne/aston-osint.git
-Firewall: UFW (ports 22, 80, 443 only; SpiderFoot port 5001 blocked externally)
-API Layer: Flask or FastAPI (lightweight wrapper over SpiderFoot REST API)
-AI Synthesis: Claude API (structured UHNW prospect briefs from SpiderFoot JSON)
-Report Format: Markdown/HTML with optional PDF export
-Future Integration: Rails/Aston app connection deferred — standalone async API for now
+Ops Web Form: Static HTML served by nginx (no framework, no build step)
+
+Data Sources:
+- OCCRP Aleph: REST API, free, no key required
+- OpenSanctions: REST API, free tier
+- ICIJ OffshoreLeaks: REST API, free, no key required
+- Pappers: REST API, free tier (limited)
+- GDELT: REST API, free, no key required

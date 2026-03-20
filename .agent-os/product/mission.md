@@ -2,80 +2,81 @@
 
 ## Pitch
 
-Aston OSINT is a self-hosted intelligence platform that helps Aston's luxury brand teams profile Ultra High Net Worth prospects, verify AML/KYC compliance, and generate sales intelligence through a chat-based query and report workflow, powered by SpiderFoot on dedicated EU infrastructure.
+Aston OSINT is a self-hosted intelligence pipeline that helps Aston's luxury brand teams profile Ultra High Net Worth prospects and screen AML/KYC compliance by aggregating five open-source data sources and synthesising results into structured intelligence briefs via Claude, deployed on Hetzner via GitOps.
 
 ## Users
 
 ### Primary Customers
 
-- Aston Sales Teams: Advisors managing UHNW client relationships across luxury brands (hospitality, real estate, concierge) who need deep prospect intelligence to close high-value transactions
-- Aston Compliance Officers: Staff responsible for AML/KYC due diligence on transactions ranging from EUR 20K to EUR 500K+
+- Aston Ops Team: Non-technical staff who need to run prospect intelligence checks via a simple web form before or during the booking process
+- Aston Sales Advisors: Advisors managing UHNW client relationships who need deep prospect profiles to close high-value transactions and identify new leads
 
 ### User Personas
 
-**Luxury Sales Advisor** (30-50 years old)
-- **Role:** Senior Client Advisor
-- **Context:** Manages a portfolio of UHNW clients across multiple luxury brands, handles bookings and transactions in the EUR 20K-500K+ range
-- **Pain Points:** Cannot find reliable contact information for UHNW prospects, relies on intermediaries who erode margins, no visibility into prospect wealth structures or networks
-- **Goals:** Bypass intermediaries to reach UHNW individuals directly, identify new qualified prospects through network mapping, time outreach to liquidity events
+**Operations Manager** (30-45 years old)
+- **Role:** Booking Operations
+- **Context:** Processes villa and chalet bookings ranging from EUR 20K to EUR 500K+, needs to verify client identity and risk before confirming
+- **Pain Points:** No systematic screening process, manual ad-hoc research, exposure to sanctions and PEP risk, no audit trail
+- **Goals:** Run a name through a single form and get a compliance-ready intelligence brief in under 90 seconds
 
-**Compliance Manager** (35-55 years old)
-- **Role:** AML/KYC Compliance Officer
-- **Context:** Must verify the identity, beneficial ownership, and risk profile of high-value transaction counterparties under EU AML regulations
-- **Pain Points:** Third-party intelligence reports cost EUR 5K+ each, turnaround is slow, international profiles (Chinese, Russian, Middle Eastern, Central Asian nationals) are difficult to screen with standard tools
-- **Goals:** Build defensible compliance paper trails efficiently, screen against PEP lists and sanctions databases, verify beneficial ownership across opaque corporate structures
+**Senior Sales Advisor** (35-50 years old)
+- **Role:** UHNW Client Advisor
+- **Context:** Manages a portfolio of UHNW clients across multiple luxury brands, needs to identify direct contacts and network connections
+- **Pain Points:** Cannot find reliable contact information, relies on intermediaries who erode margins, no visibility into prospect wealth structures
+- **Goals:** Identify connected individuals, offshore structures, and liquidity event signals to time outreach and bypass intermediaries
 
 ## The Problem
 
-### UHNW Profiles Are Invisible to Standard Tools
+### No Systematic Prospect Profiling
 
-Ultra High Net Worth individuals do not maintain LinkedIn profiles or appear in standard CRM enrichment databases. Their wealth is distributed across holding companies, family offices, and trusts spanning multiple jurisdictions. Standard sales intelligence tools return nothing useful.
+Intel is gathered ad hoc by ops team members manually. There is no structured, reproducible process for profiling UHNW prospects. Standard CRM enrichment tools return nothing useful for this segment.
 
-**Our Solution:** SpiderFoot aggregates public fragments from company registries, property records, press mentions, and legal filings to reconstruct comprehensive UHNW profiles.
+**Our Solution:** An automated pipeline that fans out to 5 data sources in parallel and synthesises results via Claude into a structured intelligence brief.
 
-### International Profiles Are Deliberately Opaque
+### No AML/KYC Screening Process
 
-A significant share of Aston's prospects are Chinese, Russian, Middle Eastern, or Central Asian nationals whose digital footprint is either minimal in Western sources or deliberately structured for opacity through nominees, BVI shells, and Liechtenstein foundations.
+Aston handles transactions of EUR 20K-500K+ with no systematic screening against sanctions lists, PEP databases, or adverse media. This creates regulatory exposure.
 
-**Our Solution:** Cross-jurisdictional registry lookups and multi-source correlation map opaque profiles without requiring a dedicated intelligence firm at EUR 5K+ per report.
+**Our Solution:** Every scan automatically checks OpenSanctions for PEP and sanctions flags, and OCCRP Aleph for adverse media and investigation links.
 
-### AML/KYC Compliance Is Increasingly Regulated
+### Per-Report Intelligence Costs Are Prohibitive
 
-Transactions of EUR 20K-500K+ create legitimate regulatory obligations to know who you are doing business with. Manual compliance checks do not scale and leave gaps in the audit trail.
+Third-party intelligence firms charge EUR 2K-5K per report. At current prospect volume, this is not viable for systematic screening.
 
-**Our Solution:** Automated PEP screening, sanctions list cross-referencing, adverse media checks, and beneficial ownership verification produce a defensible paper trail for every transaction.
+**Our Solution:** The pipeline costs effectively zero per query beyond fixed infrastructure costs (Hetzner VPS + Claude API tokens).
 
 ## Differentiators
 
-### In-House Intelligence at Marginal Cost
+### Five Free Data Sources, One Unified Brief
 
-Unlike third-party intelligence firms charging EUR 5K+ per report, Aston OSINT runs on dedicated infrastructure at fixed monthly cost. Each additional prospect profile costs only compute time, making deep intelligence viable at scale rather than reserved for the highest-value prospects only.
+Unlike paid intelligence platforms, Aston OSINT aggregates five high-quality free sources (OCCRP Aleph, OpenSanctions, ICIJ OffshoreLeaks, Pappers, GDELT) into a single AI-synthesised brief. No per-query fees, no subscriptions.
 
-### Compliance and Sales Intelligence in One Platform
+### AI-Synthesised Intelligence, Not Raw Data Dumps
 
-Unlike standalone compliance tools (World-Check, Dow Jones) that only flag risk, Aston OSINT simultaneously produces sales-relevant intelligence: direct contact recovery, network mapping of connected UHNW individuals, and timing signals from liquidity events. One scan serves both compliance and commercial teams.
+Unlike OSINT tools that return raw search results, Aston OSINT uses Claude to produce a structured brief with identity verification, risk scoring, and actionable recommendations — readable by non-technical ops staff.
 
-### GitOps-Managed, Zero-Touch Operations
+### Compliance-Ready Audit Trail
 
-Unlike manually maintained OSINT tools that degrade over time, Aston OSINT is deployed and updated via a single git push to main. GitHub Actions handles deployment, configuration, and service verification automatically, ensuring the platform is always current without dedicated DevOps effort.
+Unlike manual research, every scan produces a timestamped, structured output (PDF + JSON) that serves as a defensible compliance record if a transaction is ever questioned.
 
 ## Key Features
 
-### Core OSINT Features
+### Core Intelligence Features
 
-- **UHNW Prospect Profiling:** Reconstruct wealth structures, corporate holdings, and asset positions from public registry data, press mentions, and legal filings
-- **PEP Screening:** Automatically check prospects against politically exposed persons databases across jurisdictions
-- **Sanctions Cross-Referencing:** Screen against OFAC, EU consolidated list, and other sanctions databases in a single scan
-- **Adverse Media Detection:** Surface fraud, money laundering, and corruption signals from news and legal sources
-- **Beneficial Ownership Verification:** Trace through nominees, shell companies, and trust structures to identify ultimate beneficial owners
+- **Multi-Source OSINT Scan:** Parallel queries across OCCRP Aleph, OpenSanctions, ICIJ OffshoreLeaks, Pappers, and GDELT
+- **AI-Synthesised Brief:** Claude produces a structured intelligence report with identity, entities, sanctions flags, offshore links, press signals, and risk score
+- **PDF Report Generation:** WeasyPrint renders a downloadable, well-formatted PDF from an HTML template
+- **JSON API Output:** Structured JSON response for programmatic integration
+- **Risk Scoring:** Automated risk assessment (LOW/MEDIUM/HIGH/CRITICAL) with rationale
 
-### Sales Intelligence Features
+### User Interface Features
 
-- **Direct Contact Recovery:** Find personal emails, PA contacts, and family office numbers to bypass intermediaries and protect margin
-- **Network Mapping:** Surface connected individuals (co-directors, co-investors, family members) who are qualified prospects by association
-- **Timing Signal Detection:** Identify liquidity events (IPOs, acquisitions, asset sales) that indicate near-term luxury spending appetite
+- **Ops Web Form:** Minimal single-page HTML form for non-technical users — enter a name, get a PDF
+- **REST API Endpoint:** POST /api/v1/scan for programmatic access from Aston or scripts
 
 ### Infrastructure Features
 
-- **GitOps Deployment:** Single git push to main triggers automated deployment to Hetzner VPS via GitHub Actions
-- **HTTPS with Auto-Renewal:** Nginx reverse proxy with Let's Encrypt certificates, auto-renewing without intervention
+- **Docker Deployment:** Single Docker container on Hetzner VPS
+- **GitOps Pipeline:** GitHub Actions deploy on manual trigger
+- **API Key Authentication:** Secure access to the scan endpoint
+- **30-Second Source Timeout:** No silent failures — each adapter returns results or a clean timeout

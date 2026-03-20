@@ -13,7 +13,7 @@
 
 ### Decision
 
-Build an in-house OSINT platform for Aston using SpiderFoot, deployed on Hetzner VPS via GitOps, to provide UHNW prospect profiling, AML/KYC compliance screening, and sales intelligence for luxury brand transactions.
+Build an in-house OSINT intelligence pipeline for Aston, deployed on Hetzner VPS via GitOps, to provide UHNW prospect profiling, AML/KYC compliance screening, and sales intelligence for luxury brand transactions.
 
 ### Context
 
@@ -35,7 +35,7 @@ Aston serves Ultra High Net Worth clients across multiple luxury brands with tra
 
 ### Rationale
 
-SpiderFoot is open-source, actively maintained, and supports the exact data sources needed for UHNW profiling (company registries, press, legal filings). Self-hosting on Hetzner keeps data under Aston's control (critical for RGPD). GitOps deployment eliminates operational overhead. The phased approach (infra first, then modules, then Rails integration) manages risk incrementally.
+A custom FastAPI pipeline with 5 targeted free data sources (OCCRP Aleph, OpenSanctions, ICIJ OffshoreLeaks, Pappers, GDELT) gives precise control over UHNW-relevant intelligence. Self-hosting on Hetzner keeps data under Aston's control (critical for RGPD). GitOps deployment eliminates operational overhead. The phased approach (infra, adapters, synthesis, UI) manages risk incrementally.
 
 ### Consequences
 
@@ -47,45 +47,61 @@ SpiderFoot is open-source, actively maintained, and supports the exact data sour
 
 **Negative:**
 - Requires initial infrastructure setup and ongoing VPS costs
-- SpiderFoot module quality depends on API key access and data source availability
-- Team must learn to interpret raw OSINT output until AI synthesis layer is built
+- Custom adapters require maintenance as source APIs evolve
+- Claude API cost per scan (minimal but non-zero)
 
 ## 2026-03-20: Infrastructure Stack Selection
 
 **ID:** DEC-002
-**Status:** Accepted
+**Status:** Superseded by DEC-003
 **Category:** Technical
 **Stakeholders:** Tech Lead
 
 ### Decision
 
-Use Hetzner VPS with Ubuntu 24.04 LTS, Nginx reverse proxy, Let's Encrypt TLS, systemd process management, and GitHub Actions for CI/CD. This diverges from the global Agent OS default stack (Rails on Digital Ocean) because this project is a Python-based infrastructure deployment, not a web application.
+Use Hetzner VPS with Ubuntu 24.04 LTS, Nginx reverse proxy, Let's Encrypt TLS, systemd process management, and GitHub Actions for CI/CD.
 
 ### Context
 
-SpiderFoot is a Python application that runs as a standalone web server. It does not require Rails, PostgreSQL, or the standard Aston web application stack. The deployment model is GitOps: push to main triggers automated deployment via SSH.
+Original stack decision for SpiderFoot deployment. Superseded by DEC-003 which replaces SpiderFoot with a custom FastAPI pipeline in Docker.
+
+## 2026-03-20: Replace SpiderFoot with Custom Pipeline
+
+**ID:** DEC-003
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner, Tech Lead
+
+### Decision
+
+Replace SpiderFoot with a custom FastAPI intelligence pipeline using Docker on Hetzner. SpiderFoot is no longer actively maintained and provides far more modules than needed. A custom pipeline with 5 targeted free data sources (OCCRP Aleph, OpenSanctions, ICIJ OffshoreLeaks, Pappers, GDELT) gives better control, simpler architecture, and built-in Claude synthesis.
+
+### Context
+
+SpiderFoot has hundreds of modules but is unmaintained. We only need 5 specific data sources relevant to UHNW profiling and AML/KYC. Building custom async adapters with FastAPI is simpler than configuring and wrapping SpiderFoot, and allows direct Claude integration for AI-synthesised intelligence briefs.
 
 ### Alternatives Considered
 
-1. **Docker + Docker Compose on Digital Ocean**
-   - Pros: Consistent with containerized workflows, easy to replicate
-   - Cons: Adds complexity layer for a single-service deployment, Digital Ocean more expensive than Hetzner for equivalent specs
+1. **SpiderFoot (original plan)**
+   - Pros: Broad module ecosystem, existing tool
+   - Cons: Unmaintained, too many irrelevant modules, no built-in AI synthesis, requires wrapper API anyway
 
-2. **Hetzner with Ansible/Terraform**
-   - Pros: Infrastructure as code, reproducible
-   - Cons: Over-engineered for single-VPS deployment, adds learning curve
+2. **Maltego Community Edition**
+   - Pros: Visual graph analysis, transform ecosystem
+   - Cons: Desktop application, not API-first, licensing restrictions
 
 ### Rationale
 
-Hetzner offers better price/performance for dedicated VPS in the EU (important for RGPD). A simple bootstrap.sh + deploy.sh pattern is sufficient for a single-server deployment and keeps the operational model transparent. systemd provides reliable process management without container overhead.
+A custom FastAPI service with 5 async adapters is less code than a SpiderFoot wrapper, gives full control over data normalisation, and integrates Claude synthesis natively. Docker deployment is cleaner than systemd for a Python web service.
 
 ### Consequences
 
 **Positive:**
-- Low-cost EU-hosted infrastructure
-- Simple operational model with minimal moving parts
-- GitHub Actions provides familiar CI/CD without additional tooling
+- Full control over data sources and output format
+- Built-in Claude synthesis — no separate integration layer needed
+- Docker deployment is reproducible and portable
+- Simpler architecture: one service, no SpiderFoot dependency
 
 **Negative:**
-- Single-server architecture has no built-in redundancy
-- Manual bootstrap step required for initial server setup
+- Must build and maintain 5 source adapters
+- No fallback to SpiderFoot's broader module ecosystem
