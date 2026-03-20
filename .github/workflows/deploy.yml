@@ -13,7 +13,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: deploy
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_ROOT_KEY }}
           envs: SF_DOMAIN
           script: bash /opt/aston-osint/scripts/deploy.sh
         env:

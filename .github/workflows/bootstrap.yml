@@ -8,41 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Generate deploy SSH keypair
-        id: keygen
-        run: |
-          ssh-keygen -t ed25519 -f /tmp/deploy_key -N "" -q
-          echo "public_key=$(cat /tmp/deploy_key.pub)" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Copy bootstrap script to server and run
+      - name: Setup server via SSH as root
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: root
           key: ${{ secrets.SSH_ROOT_KEY }}
-          envs: SF_DOMAIN,CERT_EMAIL,DEPLOY_PUBLIC_KEY
+          envs: SF_DOMAIN,CERT_EMAIL
           script: |
             export SF_DOMAIN="${SF_DOMAIN}"
             export CERT_EMAIL="${CERT_EMAIL}"
-            export DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY}"
-            # Force re-clone to get latest config files
             rm -rf /opt/aston-osint
             git clone https://github.com/jetienne/aston-osint.git /opt/aston-osint
             bash /opt/aston-osint/scripts/bootstrap.sh
         env:
           SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
           CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
-          DEPLOY_PUBLIC_KEY: ${{ steps.keygen.outputs.public_key }}
-
-      - name: Output deploy private key
-        run: |
-          echo "============================================"
-          echo "DEPLOY PRIVATE KEY — copy this and save it"
-          echo "as the SSH_PRIVATE_KEY environment secret"
-          echo "in the 'production' environment"
-          echo "============================================"
-          cat /tmp/deploy_key
-          echo "============================================"

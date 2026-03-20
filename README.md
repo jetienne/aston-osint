@@ -75,11 +75,10 @@ Go to **Actions → Setup VPS → Run workflow**.
 This will:
 - SSH as root into the server
 - Install Docker, nginx, certbot
-- Create a `deploy` user with a freshly generated SSH keypair
+- Create a `deploy` user (same SSH key as root)
 - Configure nginx reverse proxy, Let's Encrypt TLS, UFW firewall
-- Print the deploy private key in the workflow logs
 
-After setup completes, copy the private key from the logs and add it as the `SSH_PRIVATE_KEY` secret in the `production` environment. The deploy workflow uses this key to connect as the `deploy` user.
+No extra secrets needed — both workflows use `SSH_ROOT_KEY` to connect.
 
 ### Deploy (on demand)
 

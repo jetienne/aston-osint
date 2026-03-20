@@ -8,7 +8,6 @@ fi
 
 SF_DOMAIN="${SF_DOMAIN:?Error: SF_DOMAIN environment variable is required}"
 CERT_EMAIL="${CERT_EMAIL:?Error: CERT_EMAIL environment variable is required}"
-DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY:-}"
 REPO_URL="${REPO_URL:-https://github.com/jetienne/aston-osint.git}"
 
 echo "==> System update"
@@ -33,14 +32,7 @@ if ! id -u deploy &>/dev/null; then
   echo "deploy ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/deploy
 fi
 mkdir -p /home/deploy/.ssh
-if [ -n "$DEPLOY_PUBLIC_KEY" ]; then
-  echo "$DEPLOY_PUBLIC_KEY" > /home/deploy/.ssh/authorized_keys
-elif [ -f /root/.ssh/authorized_keys ]; then
-  cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
-else
-  echo "Error: No SSH public key available for deploy user"
-  exit 1
-fi
+cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
 chown -R deploy:deploy /home/deploy/.ssh
 chmod 700 /home/deploy/.ssh
 chmod 600 /home/deploy/.ssh/authorized_keys
