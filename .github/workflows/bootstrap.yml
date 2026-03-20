@@ -11,8 +11,8 @@ jobs:
       - name: Generate deploy SSH keypair
         id: keygen
         run: |
-          ssh-keygen -t ed25519 -f deploy_key -N "" -q
-          echo "public_key=$(cat deploy_key.pub)" >> "$GITHUB_OUTPUT"
+          ssh-keygen -t ed25519 -f /tmp/deploy_key -N "" -q
+          echo "public_key=$(cat /tmp/deploy_key.pub)" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -44,5 +44,5 @@ jobs:
           echo "as the SSH_PRIVATE_KEY environment secret"
           echo "in the 'production' environment"
           echo "============================================"
-          cat deploy_key
+          cat /tmp/deploy_key
           echo "============================================"
