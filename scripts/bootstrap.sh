@@ -10,6 +10,7 @@ SF_DOMAIN="${SF_DOMAIN:?Error: SF_DOMAIN environment variable is required}"
 CERT_EMAIL="${CERT_EMAIL:?Error: CERT_EMAIL environment variable is required}"
 SF_AUTH_USER="${SF_AUTH_USER:?Error: SF_AUTH_USER environment variable is required}"
 SF_AUTH_PASS="${SF_AUTH_PASS:?Error: SF_AUTH_PASS environment variable is required}"
+DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY:-}"
 REPO_URL="${REPO_URL:-https://github.com/jetienne/aston-osint.git}"
 
 echo "==> System update"
@@ -23,12 +24,19 @@ if ! id -u deploy &>/dev/null; then
   adduser --disabled-password --gecos "" deploy
   usermod -aG sudo deploy
   echo "deploy ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/deploy
-  mkdir -p /home/deploy/.ssh
-  cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
-  chown -R deploy:deploy /home/deploy/.ssh
-  chmod 700 /home/deploy/.ssh
-  chmod 600 /home/deploy/.ssh/authorized_keys
 fi
+mkdir -p /home/deploy/.ssh
+if [ -n "$DEPLOY_PUBLIC_KEY" ]; then
+  echo "$DEPLOY_PUBLIC_KEY" > /home/deploy/.ssh/authorized_keys
+elif [ -f /root/.ssh/authorized_keys ]; then
+  cp /root/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+else
+  echo "Error: No SSH public key available for deploy user"
+  exit 1
+fi
+chown -R deploy:deploy /home/deploy/.ssh
+chmod 700 /home/deploy/.ssh
+chmod 600 /home/deploy/.ssh/authorized_keys
 
 echo "==> Cloning SpiderFoot"
 if [ ! -d /opt/spiderfoot ]; then

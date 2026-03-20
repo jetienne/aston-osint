@@ -1,0 +1,38 @@
+name: Bootstrap Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate deploy SSH keypair
+        id: keygen
+        run: |
+          ssh-keygen -t ed25519 -f deploy_key -N "" -q
+          echo "public_key=$(cat deploy_key.pub)" >> "$GITHUB_OUTPUT"
+
+      - name: Bootstrap server via SSH as root
+        uses: appleboy/ssh-action@v1
+        env:
+          SF_DOMAIN: ${{ secrets.SF_DOMAIN }}
+          CERT_EMAIL: ${{ secrets.CERT_EMAIL }}
+          SF_AUTH_USER: ${{ secrets.SF_AUTH_USER }}
+          SF_AUTH_PASS: ${{ secrets.SF_AUTH_PASS }}
+          DEPLOY_PUBLIC_KEY: ${{ steps.keygen.outputs.public_key }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          key: ${{ secrets.SSH_ROOT_KEY }}
+          script_stop: true
+          envs: SF_DOMAIN,CERT_EMAIL,SF_AUTH_USER,SF_AUTH_PASS,DEPLOY_PUBLIC_KEY
+          script: |
+            curl -sL https://raw.githubusercontent.com/jetienne/aston-osint/main/scripts/bootstrap.sh | bash
+
+      - name: Save deploy private key as GitHub secret
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          gh secret set SSH_PRIVATE_KEY --repo jetienne/aston-osint < deploy_key
+          echo "Deploy key saved as SSH_PRIVATE_KEY secret"

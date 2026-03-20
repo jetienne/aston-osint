@@ -22,18 +22,35 @@ Standard CRM enrichment tools don't work for UHNW clients. Their wealth sits acr
 - **CI/CD:** GitHub Actions — `git push main` triggers automated deployment
 - **Firewall:** UFW (ports 22, 80, 443 only; SpiderFoot port 5001 blocked externally)
 
-## Deployment
+## Deployment (Full GitOps)
+
+No manual SSH required. Everything runs through GitHub Actions.
+
+### GitHub Secrets Required
+
+| Secret | Description |
+|---|---|
+| `SSH_ROOT_KEY` | Root SSH private key (Hetzner sets this at VPS creation) |
+| `SSH_HOST` | Server IP |
+| `SF_DOMAIN` | Domain pointed to the server |
+| `CERT_EMAIL` | Email for Let's Encrypt registration |
+| `SF_AUTH_USER` | Basic auth username |
+| `SF_AUTH_PASS` | Basic auth password |
+| `GH_PAT` | GitHub PAT with repo secrets write access (for deploy key auto-setup) |
 
 ### Initial Setup (once)
 
 1. Create Hetzner VPS — Ubuntu 24.04 LTS, add SSH public key at creation
-2. SSH into the server and run `bootstrap.sh` as root
-3. Add GitHub Secrets to the repository (`SSH_PRIVATE_KEY`, `SSH_HOST`, `SF_DOMAIN`, `SF_AUTH_USER`, `SF_AUTH_PASS`)
-4. Push to `main` — GitHub Actions takes over for all subsequent deploys
+2. Point your domain (A record) to the server IP
+3. Add the GitHub Secrets listed above
+4. Push to `main` so the workflows are available
+5. Go to **Actions → Bootstrap Server → Run workflow**
+
+The bootstrap workflow SSHs as root, installs everything, generates a deploy keypair, and saves the deploy private key as the `SSH_PRIVATE_KEY` secret automatically.
 
 ### On Every Push to Main
 
-GitHub Actions connects via SSH and runs `deploy.sh`, which:
+GitHub Actions connects via SSH as `deploy` user and runs `deploy.sh`, which:
 - Pulls latest code
 - Copies updated config files (nginx, systemd)
 - Writes SpiderFoot passwd file from secrets
