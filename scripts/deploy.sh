@@ -5,6 +5,8 @@ SF_DOMAIN="${SF_DOMAIN:?Error: SF_DOMAIN environment variable is required}"
 
 REPO_DIR="/opt/aston-osint"
 
+git config --global --add safe.directory /opt/aston-osint
+
 echo "==> Pulling latest code"
 cd "$REPO_DIR"
 git fetch origin main
