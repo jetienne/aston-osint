@@ -12,7 +12,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: deploy
+          username: root
           key: ${{ secrets.SSH_ROOT_KEY }}
           envs: SF_DOMAIN
           script: bash /opt/aston-osint/scripts/deploy.sh
