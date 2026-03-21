@@ -72,7 +72,9 @@ Produce a JSON intelligence brief with this exact structure:
 }}
 
 Include only sections with actual data. Return empty arrays for sections with no findings.
-The risk_assessment.summary should be 2-3 sentences explaining the overall risk profile."""
+The risk_assessment.summary should be 2-3 sentences explaining the overall risk profile.
+Keep the response concise — limit press_coverage to the 10 most relevant articles.
+Limit corporate_network to the 15 most significant companies."""
 
 
 async def synthesize_brief(query: str, enriched_results: list) -> dict:
@@ -85,23 +87,25 @@ async def synthesize_brief(query: str, enriched_results: list) -> dict:
             source_data = {
                 'source': result.source,
                 'matches': [
-                    {'name': m.name, 'type': m.type, 'summary': m.summary, 'data': m.data}
-                    for m in result.matches
+                    _truncate_match(m)
+                    for m in result.matches[:10]
                 ],
             }
         else:
             source_data = result
         enriched_data.append(source_data)
 
+    enriched_json = json.dumps(enriched_data, indent=2, default=str)
+
     prompt = USER_PROMPT_TEMPLATE.format(
         subject_name=query,
-        enriched_json=json.dumps(enriched_data, indent=2, default=str),
+        enriched_json=enriched_json,
     )
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     response = client.messages.create(
         model='claude-sonnet-4-6',
-        max_tokens=4096,
+        max_tokens=8192,
         system=SYSTEM_PROMPT,
         messages=[{'role': 'user', 'content': prompt}],
     )
@@ -114,6 +118,23 @@ async def synthesize_brief(query: str, enriched_results: list) -> dict:
     brief['subject_name'] = query
     brief['generated_at'] = datetime.now(timezone.utc).isoformat()
     return brief
+
+
+def _truncate_match(m):
+    data = dict(m.data)
+    if 'enriched_articles' in data:
+        data['enriched_articles'] = data['enriched_articles'][:10]
+    if 'entreprises' in data:
+        data['entreprises'] = data['entreprises'][:10]
+    if 'beneficiaires_effectifs' in data:
+        data['beneficiaires_effectifs'] = data['beneficiaires_effectifs'][:10]
+    if 'finances' in data:
+        data['finances'] = data['finances'][:5]
+    if 'actes' in data:
+        data['actes'] = data['actes'][:5]
+    if 'bodacc' in data:
+        data['bodacc'] = data['bodacc'][:5]
+    return {'name': m.name, 'type': m.type, 'summary': m.summary, 'data': data}
 
 
 def _fallback_brief(query: str, enriched_results: list) -> dict:
