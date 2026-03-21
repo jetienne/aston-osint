@@ -2,10 +2,10 @@
 
 ## Tasks
 
-- [ ] 1. Scan state storage
-  - [ ] 1.1 Create `app/scan_store.py` — in-memory store with UUID keys and 1-hour TTL
-  - [ ] 1.2 Write tests for save, get, and expiry
-  - [ ] 1.3 Update orchestrator to save raw results and return scan_id
+- [x] 1. Scan state storage
+  - [x] 1.1 Create `app/scan_store.py` — in-memory store with UUID keys and 1-hour TTL
+  - [x] 1.2 Write tests for save, get, and expiry
+  - [x] 1.3 Update orchestrator to save raw results and return scan_id
 
 - [ ] 2. Facet extraction
   - [ ] 2.1 Create `app/resolution/disambiguation.py` — extract facets (country, birth year, company, dataset) from match data
