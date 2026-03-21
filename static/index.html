@@ -88,7 +88,7 @@
         });
         scanData = await resp.json();
         scanId = scanData.scan_id;
-        facets = (scanData.disambiguation && scanData.disambiguation.facets) || [];
+        facets = ((scanData.disambiguation && scanData.disambiguation.facets) || []).filter(f => f.options.length >= 2);
         currentFacetIndex = 0;
         selectedFilters = {};
 
