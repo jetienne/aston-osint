@@ -399,3 +399,67 @@ button:disabled {
   color: #8b8680;
   margin-top: 8px;
 }
+
+/* Mobile: sidebar becomes top bar */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    overflow-x: auto;
+  }
+
+  .sidebar-logo {
+    margin-bottom: 0;
+    padding: 0;
+    white-space: nowrap;
+  }
+
+  .sidebar-section {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 0;
+  }
+
+  .sidebar-label {
+    display: none;
+  }
+
+  .sidebar-link {
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 20px 16px;
+    max-width: 100%;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-row .form-field {
+    margin-bottom: 12px;
+  }
+
+  .wizard-actions {
+    flex-direction: column;
+  }
+
+  .wizard-actions button {
+    width: 100%;
+  }
+}
