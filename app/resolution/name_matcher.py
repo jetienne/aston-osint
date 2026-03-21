@@ -1,5 +1,4 @@
 import re
-import unicodedata
 
 from unidecode import unidecode
 
