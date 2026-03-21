@@ -30,7 +30,7 @@ class ICIJAdapter(BaseAdapter):
         for node in query_results:
             name = node.get('name', query)
             score = node.get('score', 0)
-            if score < 50:
+            if score < 80:
                 continue
             node_id = node.get('id', '')
             node_type = ', '.join(node.get('type', []))
