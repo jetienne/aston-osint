@@ -5,7 +5,6 @@ def extract_facets(results: list[SourceResult]) -> dict:
     countries = set()
     birth_years = set()
     companies = set()
-    datasets = set()
 
     for result in results:
         for match in result.matches:
@@ -40,10 +39,6 @@ def extract_facets(results: list[SourceResult]) -> dict:
                     if name:
                         companies.add(name)
 
-            for ds in data.get('datasets', []):
-                if ds:
-                    datasets.add(ds)
-
     facets = []
     if len(countries) >= 2:
         facets.append({'field': 'country', 'label': 'Country', 'options': sorted(countries)})
@@ -51,8 +46,6 @@ def extract_facets(results: list[SourceResult]) -> dict:
         facets.append({'field': 'birth_year', 'label': 'Birth year', 'options': sorted(birth_years)})
     if len(companies) >= 2:
         facets.append({'field': 'company', 'label': 'Company', 'options': sorted(companies)})
-    if len(datasets) >= 2:
-        facets.append({'field': 'dataset', 'label': 'Dataset', 'options': sorted(datasets)})
 
     has_ambiguous = any(
         m.confidence in ('MEDIUM', 'LOW')

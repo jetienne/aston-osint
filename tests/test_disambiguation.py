@@ -77,16 +77,13 @@ class TestExtractFacets:
         assert 'Gazprom' in company_facet['options']
         assert 'TOTAL SA' in company_facet['options']
 
-    def test_datasets_facet(self):
+    def test_no_dataset_facet(self):
         results = [_result([
             _match('A', {'datasets': ['ofac', 'eu_sanctions']}),
             _match('B', {'datasets': ['un_sanctions']}),
         ])]
         facets = extract_facets(results)['facets']
-        ds_facet = next(f for f in facets if f['field'] == 'dataset')
-        assert 'ofac' in ds_facet['options']
-        assert 'eu_sanctions' in ds_facet['options']
-        assert 'un_sanctions' in ds_facet['options']
+        assert not any(f['field'] == 'dataset' for f in facets)
 
     def test_has_ambiguous_true_with_medium(self):
         results = [_result([_match('A', confidence='MEDIUM')])]
@@ -132,9 +129,10 @@ class TestExtractFacets:
 
     def test_options_are_sorted(self):
         results = [_result([
-            _match('A', {'datasets': ['zz_list', 'aa_list']}),
-            _match('B', {'datasets': ['mm_list']}),
+            _match('A', {'properties': {'nationality': ['France']}}),
+            _match('B', {'properties': {'nationality': ['Australia']}}),
+            _match('C', {'properties': {'nationality': ['Belgium']}}),
         ])]
         facets = extract_facets(results)['facets']
-        ds_facet = next(f for f in facets if f['field'] == 'dataset')
-        assert ds_facet['options'] == ['aa_list', 'mm_list', 'zz_list']
+        country_facet = next(f for f in facets if f['field'] == 'country')
+        assert country_facet['options'] == ['Australia', 'Belgium', 'France']
