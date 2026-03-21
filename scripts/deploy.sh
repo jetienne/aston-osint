@@ -20,7 +20,7 @@ docker stop aston-osint 2>/dev/null || true
 docker rm aston-osint 2>/dev/null || true
 
 echo "==> Starting container"
-DOCKER_ARGS="-d --name aston-osint --restart unless-stopped -p 127.0.0.1:8000:8000"
+DOCKER_ARGS="-d --name aston-osint --restart unless-stopped -p 127.0.0.1:8000:8000 -v aston-osint-data:/data"
 if [ -f /opt/aston-osint/.env ]; then
   DOCKER_ARGS="$DOCKER_ARGS --env-file /opt/aston-osint/.env"
 fi

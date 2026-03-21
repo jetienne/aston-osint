@@ -12,6 +12,7 @@
     <div class="sidebar-section">
       <div class="sidebar-label">Intelligence</div>
       <a href="/" class="sidebar-link active">Scan</a>
+      <a href="/history.html" class="sidebar-link">History</a>
       <a href="/sources.html" class="sidebar-link">Sources</a>
     </div>
   </aside>
@@ -86,27 +87,64 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        scanData = await resp.json();
-        scanId = scanData.scan_id;
-        facets = ((scanData.disambiguation && scanData.disambiguation.facets) || []).filter(f => f.options.length >= 2);
-        currentFacetIndex = 0;
-        selectedFilters = {};
-
-        statusEl.style.display = 'none';
-        statusEl.textContent = '';
-
-        if (facets.length > 0) {
-          showNextQuestion();
-        } else {
-          showResults(scanData);
-        }
+        const { scan_id } = await resp.json();
+        scanId = scan_id;
+        pollScan(scan_id);
       } catch (err) {
+        statusEl.style.display = 'block';
         statusEl.textContent = 'Error: ' + err.message;
-      } finally {
         btn.disabled = false;
         btn.textContent = 'Run scan';
       }
     });
+
+    function pollScan(id) {
+      const interval = setInterval(async () => {
+        try {
+          const resp = await fetch('/api/v1/scans/' + id);
+          const data = await resp.json();
+
+          if (data.status === 'complete') {
+            clearInterval(interval);
+            btn.disabled = false;
+            btn.textContent = 'Run scan';
+            statusEl.style.display = 'none';
+
+            scanData = {
+              scan_id: data.id,
+              query: data.query,
+              sources: data.filtered_results || [],
+              sources_hit: data.sources_hit || [],
+              sources_failed: data.sources_failed || [],
+              duration_ms: data.duration_ms,
+              disambiguation: data.disambiguation,
+            };
+
+            facets = ((scanData.disambiguation && scanData.disambiguation.facets) || []).filter(f => f.options.length >= 2);
+            currentFacetIndex = 0;
+            selectedFilters = {};
+
+            if (facets.length > 0) {
+              showNextQuestion();
+            } else {
+              showResults(scanData);
+            }
+          } else if (data.status === 'failed') {
+            clearInterval(interval);
+            btn.disabled = false;
+            btn.textContent = 'Run scan';
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Scan failed: ' + (data.error || 'Unknown error');
+          }
+        } catch (err) {
+          clearInterval(interval);
+          btn.disabled = false;
+          btn.textContent = 'Run scan';
+          statusEl.style.display = 'block';
+          statusEl.textContent = 'Error polling: ' + err.message;
+        }
+      }, 2000);
+    }
 
     function showNextQuestion() {
       if (currentFacetIndex >= facets.length) {
