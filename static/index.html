@@ -8,19 +8,49 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }
     h1 { font-size: 1.4rem; margin-bottom: 24px; }
+
+    /* Search form */
     form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
     label { font-size: 0.85rem; font-weight: 500; color: #555; }
-    input, textarea { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
-    input:focus, textarea:focus { outline: none; border-color: #333; }
-    textarea { resize: vertical; min-height: 60px; }
+    input { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
+    input:focus { outline: none; border-color: #333; }
     button { padding: 10px 20px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
     button:hover { background: #333; }
     button:disabled { background: #999; cursor: wait; }
-    .row { display: flex; gap: 12px; }
-    .row > div { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .field { display: flex; flex-direction: column; gap: 4px; }
+
+    /* Status */
     #status { margin-bottom: 24px; font-size: 0.85rem; color: #888; }
-    #results { font-family: 'SF Mono', Monaco, monospace; font-size: 0.8rem; background: #f5f5f5; padding: 16px; border-radius: 6px; display: none; max-height: 600px; overflow-y: auto; line-height: 1.5; }
+
+    /* Wizard step */
+    #wizard { display: none; margin-bottom: 32px; }
+    .wizard-question { font-size: 0.95rem; font-weight: 500; margin-bottom: 12px; }
+    .wizard-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .pill { padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 0.85rem; cursor: pointer; user-select: none; transition: all 0.15s; }
+    .pill:hover { border-color: #999; }
+    .pill.selected { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+    .wizard-actions { display: flex; gap: 8px; }
+    .wizard-actions button { font-size: 0.85rem; padding: 8px 16px; }
+    .btn-skip { background: #fff; color: #555; border: 1px solid #ddd; }
+    .btn-skip:hover { background: #f5f5f5; }
+
+    /* Results */
+    #results { display: none; }
+    .result-card { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+    .result-card .source-tag { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .result-card .match-name { font-weight: 600; font-size: 0.95rem; }
+    .result-card .match-type { color: #999; font-weight: 400; }
+    .result-card .match-summary { color: #555; font-size: 0.85rem; margin-top: 4px; }
+    .result-card .match-confidence { font-size: 0.75rem; margin-top: 4px; }
+    .result-card .match-link { font-size: 0.75rem; margin-top: 4px; }
+    .result-card .match-link a { color: #06c; text-decoration: none; }
+    .result-card .card-actions { margin-top: 8px; display: flex; gap: 8px; }
+    .result-card .card-actions button { font-size: 0.75rem; padding: 4px 12px; border-radius: 4px; }
+    .btn-dismiss { background: #fff; color: #c00; border: 1px solid #fcc; }
+    .btn-dismiss:hover { background: #fff5f5; }
+    .result-card.dismissed { opacity: 0.3; }
+    .meta { color: #999; font-size: 0.75rem; margin-top: 16px; border-top: 1px solid #eee; padding-top: 8px; }
+    .no-results { color: #999; font-size: 0.9rem; padding: 20px 0; }
+    .error-source { color: #c00; font-size: 0.8rem; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -31,35 +61,26 @@
       <label for="name">Full name (first + last) *</label>
       <input type="text" id="name" name="name" required placeholder="e.g. Viktor Vekselberg, Irina Dunaeva">
     </div>
-    <div class="row">
-      <div>
-        <label for="nationality">Country / nationality</label>
-        <input type="text" id="nationality" name="nationality" placeholder="e.g. Russia, France">
-      </div>
-      <div>
-        <label for="birth_year">Birth year</label>
-        <input type="number" id="birth_year" name="birth_year" placeholder="e.g. 1965" min="1900" max="2010">
-      </div>
-      <div>
-        <label for="company">Known company</label>
-        <input type="text" id="company" name="company" placeholder="e.g. Renova Group">
-      </div>
-    </div>
-    <div class="field">
-      <label for="hints">Additional hints</label>
-      <textarea id="hints" name="hints" placeholder="Any context that might help the search..."></textarea>
-    </div>
     <button type="submit" id="submit-btn">Run scan</button>
   </form>
 
   <div id="status"></div>
+  <div id="wizard"></div>
   <div id="results"></div>
 
   <script>
     const form = document.getElementById('scan-form');
     const btn = document.getElementById('submit-btn');
     const statusEl = document.getElementById('status');
+    const wizardEl = document.getElementById('wizard');
     const resultsEl = document.getElementById('results');
+
+    let scanData = null;
+    let scanId = null;
+    let facets = [];
+    let currentFacetIndex = 0;
+    let selectedFilters = {};
+    let dismissedIndices = [];
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -69,30 +90,29 @@
       btn.disabled = true;
       btn.textContent = 'Scanning...';
       statusEl.textContent = 'Querying 5 sources in parallel...';
+      wizardEl.style.display = 'none';
       resultsEl.style.display = 'none';
-      resultsEl.textContent = '';
 
       try {
-        const body = { name };
-        const nationality = document.getElementById('nationality').value.trim();
-        const birth_year = document.getElementById('birth_year').value.trim();
-        const company = document.getElementById('company').value.trim();
-        const hints = document.getElementById('hints').value.trim();
-        if (nationality) body.nationality = nationality;
-        if (birth_year) body.birth_year = parseInt(birth_year);
-        if (company) body.company = company;
-        if (hints) body.hints = hints;
-
         const resp = await fetch('/api/v1/scan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ name }),
         });
+        scanData = await resp.json();
+        scanId = scanData.scan_id;
+        facets = (scanData.disambiguation && scanData.disambiguation.facets) || [];
+        currentFacetIndex = 0;
+        selectedFilters = {};
+        dismissedIndices = [];
 
-        const data = await resp.json();
         statusEl.textContent = '';
-        resultsEl.style.display = 'block';
-        renderResults(data);
+
+        if (facets.length > 0) {
+          showNextQuestion();
+        } else {
+          showResults(scanData);
+        }
       } catch (err) {
         statusEl.textContent = 'Error: ' + err.message;
       } finally {
@@ -101,79 +121,194 @@
       }
     });
 
-    function renderResults(data) {
+    function showNextQuestion() {
+      if (currentFacetIndex >= facets.length) {
+        wizardEl.style.display = 'none';
+        refineAndShowResults();
+        return;
+      }
+
+      const facet = facets[currentFacetIndex];
+      wizardEl.style.display = 'block';
+      wizardEl.textContent = '';
+
+      const step = document.createElement('div');
+      step.style.cssText = 'color:#999;font-size:0.75rem;margin-bottom:8px;';
+      step.textContent = 'Step ' + (currentFacetIndex + 1) + ' of ' + facets.length;
+      wizardEl.appendChild(step);
+
+      const question = document.createElement('div');
+      question.className = 'wizard-question';
+      question.textContent = facet.label + '?';
+      wizardEl.appendChild(question);
+
+      const pills = document.createElement('div');
+      pills.className = 'wizard-pills';
+
+      const selected = new Set();
+
+      for (const option of facet.options) {
+        const pill = document.createElement('div');
+        pill.className = 'pill';
+        pill.textContent = option;
+        pill.addEventListener('click', () => {
+          if (selected.has(option)) {
+            selected.delete(option);
+            pill.classList.remove('selected');
+          } else {
+            selected.add(option);
+            pill.classList.add('selected');
+          }
+        });
+        pills.appendChild(pill);
+      }
+      wizardEl.appendChild(pills);
+
+      const actions = document.createElement('div');
+      actions.className = 'wizard-actions';
+
+      const skipBtn = document.createElement('button');
+      skipBtn.className = 'btn-skip';
+      skipBtn.textContent = 'Skip';
+      skipBtn.addEventListener('click', () => {
+        currentFacetIndex++;
+        showNextQuestion();
+      });
+      actions.appendChild(skipBtn);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = currentFacetIndex === facets.length - 1 ? 'Show results' : 'Next';
+      nextBtn.addEventListener('click', () => {
+        if (selected.size > 0) {
+          selectedFilters[facet.field] = Array.from(selected);
+        }
+        currentFacetIndex++;
+        showNextQuestion();
+      });
+      actions.appendChild(nextBtn);
+
+      wizardEl.appendChild(actions);
+    }
+
+    async function refineAndShowResults() {
+      const hasFilters = Object.keys(selectedFilters).length > 0;
+
+      if (hasFilters && scanId) {
+        statusEl.textContent = 'Filtering results...';
+        try {
+          const resp = await fetch('/api/v1/scan/' + scanId + '/refine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filters: selectedFilters, dismissed: [] }),
+          });
+          scanData = await resp.json();
+        } catch (err) {
+          statusEl.textContent = 'Error refining: ' + err.message;
+          return;
+        }
+      }
+
+      statusEl.textContent = '';
+      showResults(scanData);
+    }
+
+    function showResults(data) {
       resultsEl.textContent = '';
+      resultsEl.style.display = 'block';
+
+      let flatIndex = 0;
+      let totalMatches = 0;
 
       for (const source of data.sources) {
-        const block = document.createElement('div');
-        block.style.marginBottom = '16px';
-
-        const header = document.createElement('div');
-        header.style.fontWeight = '700';
-        header.style.marginBottom = '4px';
-        header.textContent = source.source.toUpperCase() + ' (' + source.duration_ms + 'ms)';
-        block.appendChild(header);
-
         if (source.error) {
-          const err = document.createElement('div');
-          err.style.color = '#c00';
-          err.textContent = 'Error: ' + source.error;
-          block.appendChild(err);
-        } else if (source.matches.length === 0) {
-          const empty = document.createElement('div');
-          empty.style.color = '#999';
-          empty.textContent = 'No matches';
-          block.appendChild(empty);
-        } else {
-          for (const m of source.matches) {
-            const match = document.createElement('div');
-            match.style.marginLeft = '12px';
-            match.style.marginBottom = '6px';
-
-            const nameEl = document.createElement('div');
-            nameEl.style.fontWeight = '600';
-            nameEl.textContent = m.name + ' (' + m.type + ')';
-            match.appendChild(nameEl);
-
-            const summary = document.createElement('div');
-            summary.style.color = '#555';
-            summary.textContent = m.summary;
-            match.appendChild(summary);
-
-            if (m.confidence) {
-              const conf = document.createElement('div');
-              conf.style.fontSize = '0.75rem';
-              const colors = { HIGH: '#0a0', MEDIUM: '#f90', LOW: '#c00' };
-              conf.style.color = colors[m.confidence] || '#999';
-              conf.textContent = m.confidence + (m.rationale ? ' — ' + m.rationale : '');
-              match.appendChild(conf);
-            }
-
-            if (m.url) {
-              const link = document.createElement('a');
-              link.href = m.url;
-              link.target = '_blank';
-              link.rel = 'noopener';
-              link.textContent = m.url;
-              link.style.color = '#06c';
-              link.style.fontSize = '0.75rem';
-              match.appendChild(link);
-            }
-
-            block.appendChild(match);
-          }
+          const errDiv = document.createElement('div');
+          errDiv.className = 'error-source';
+          errDiv.textContent = source.source.toUpperCase() + ': ' + source.error;
+          resultsEl.appendChild(errDiv);
+          continue;
         }
 
-        resultsEl.appendChild(block);
+        for (const m of source.matches) {
+          totalMatches++;
+          const idx = flatIndex++;
+          const card = document.createElement('div');
+          card.className = 'result-card';
+          card.dataset.index = idx;
+
+          const tag = document.createElement('div');
+          tag.className = 'source-tag';
+          tag.textContent = source.source;
+          card.appendChild(tag);
+
+          const nameEl = document.createElement('div');
+          nameEl.className = 'match-name';
+          const typeSpan = document.createElement('span');
+          typeSpan.className = 'match-type';
+          typeSpan.textContent = ' (' + m.type + ')';
+          nameEl.textContent = m.name;
+          nameEl.appendChild(typeSpan);
+          card.appendChild(nameEl);
+
+          const summary = document.createElement('div');
+          summary.className = 'match-summary';
+          summary.textContent = m.summary;
+          card.appendChild(summary);
+
+          if (m.confidence) {
+            const conf = document.createElement('div');
+            conf.className = 'match-confidence';
+            const colors = { HIGH: '#0a0', MEDIUM: '#f90', LOW: '#c00' };
+            conf.style.color = colors[m.confidence] || '#999';
+            conf.textContent = m.confidence + (m.rationale ? ' — ' + m.rationale : '');
+            card.appendChild(conf);
+          }
+
+          if (m.url) {
+            const linkDiv = document.createElement('div');
+            linkDiv.className = 'match-link';
+            const link = document.createElement('a');
+            link.href = m.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+            link.textContent = m.url;
+            linkDiv.appendChild(link);
+            card.appendChild(linkDiv);
+          }
+
+          const actions = document.createElement('div');
+          actions.className = 'card-actions';
+          const dismissBtn = document.createElement('button');
+          dismissBtn.className = 'btn-dismiss';
+          dismissBtn.textContent = 'Dismiss';
+          dismissBtn.addEventListener('click', () => {
+            card.classList.add('dismissed');
+            dismissBtn.disabled = true;
+            dismissBtn.textContent = 'Dismissed';
+            dismissedIndices.push(idx);
+          });
+          actions.appendChild(dismissBtn);
+          card.appendChild(actions);
+
+          resultsEl.appendChild(card);
+        }
+      }
+
+      if (totalMatches === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'no-results';
+        empty.textContent = 'No matches found across any source.';
+        resultsEl.appendChild(empty);
       }
 
       const meta = document.createElement('div');
-      meta.style.cssText = 'color:#999;font-size:0.75rem;margin-top:12px;border-top:1px solid #ddd;padding-top:8px;';
-      meta.textContent = 'Sources hit: ' + data.sources_hit.join(', ');
-      if (data.sources_failed.length) {
+      meta.className = 'meta';
+      meta.textContent = 'Sources: ' + data.sources_hit.join(', ');
+      if (data.sources_failed && data.sources_failed.length) {
         meta.textContent += ' | Failed: ' + data.sources_failed.join(', ');
       }
-      meta.textContent += ' | Total: ' + data.duration_ms + 'ms';
+      if (data.duration_ms) {
+        meta.textContent += ' | ' + data.duration_ms + 'ms';
+      }
       resultsEl.appendChild(meta);
     }
   </script>

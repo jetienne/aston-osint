@@ -19,15 +19,12 @@
   - [x] 3.4 Re-run Claude entity resolution on filtered set
   - [x] 3.5 Write tests for facet filter and dismiss (15 tests)
 
-- [ ] 4. UI: match cards with accept/dismiss
-  - [ ] 4.1 Redesign match display as cards with confidence badge
-  - [ ] 4.2 Add dismiss button per match (tracks dismissed indices)
-  - [ ] 4.3 Add accept button per match (sets confidence to HIGH locally)
-
-- [ ] 5. UI: disambiguation facets
-  - [ ] 5.1 Show multi-select pill groups above results for each facet
-  - [ ] 5.2 Auto-submit on pill toggle (debounced 500ms) to refine endpoint
-  - [ ] 5.3 Re-render results and facets on refine response
+- [x] 4. UI: wizard flow + match cards
+  - [x] 4.1 Simplified search form (name only)
+  - [x] 4.2 Wizard: one facet question at a time with multi-select pills
+  - [x] 4.3 Skip button per question, Next/Show results to advance
+  - [x] 4.4 Match cards with source tag, confidence badge, dismiss button
+  - [x] 4.5 Refine call after wizard completes with selected filters
 
 - [ ] 6. Deploy and test
   - [ ] 6.1 Deploy and test full flow: scan → facet filter → accept/dismiss
