@@ -7,10 +7,10 @@
   - [x] 1.2 Write tests for save, get, and expiry
   - [x] 1.3 Update orchestrator to save raw results and return scan_id
 
-- [ ] 2. Facet extraction
-  - [ ] 2.1 Create `app/resolution/disambiguation.py` — extract facets (country, birth year, company, dataset) from match data
-  - [ ] 2.2 Update POST /api/v1/scan response to include disambiguation facets
-  - [ ] 2.3 Write tests for facet extraction
+- [x] 2. Facet extraction
+  - [x] 2.1 Create `app/resolution/disambiguation.py` — extract facets (country, birth year, company, dataset) from match data
+  - [x] 2.2 Update POST /api/v1/scan response to include disambiguation facets
+  - [x] 2.3 Write tests for facet extraction (20 tests)
 
 - [ ] 3. Refine endpoint
   - [ ] 3.1 Add POST /api/v1/scan/{scan_id}/refine endpoint
