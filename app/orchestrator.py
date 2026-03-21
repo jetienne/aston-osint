@@ -9,6 +9,7 @@ from app.adapters.pappers import PappersAdapter
 from app.models import SourceResult
 from app.resolution.claude_resolver import resolve_entities
 from app.resolution.name_matcher import filter_results
+from app.scan_store import save_scan
 
 ADAPTERS = [
     AlephAdapter(),
@@ -28,6 +29,9 @@ async def run_scan(query: str, **kwargs) -> dict:
     # Pass 1: fast local name filtering
     name_filtered = filter_results(query, raw_results)
 
+    # Save for later refinement (before Claude pass)
+    scan_id = save_scan(query, kwargs, name_filtered)
+
     # Pass 2: Claude entity resolution for remaining matches
     has_matches = any(r.matches for r in name_filtered if r.error is None)
     if has_matches:
@@ -42,6 +46,7 @@ async def run_scan(query: str, **kwargs) -> dict:
     sources_failed = [r.source for r in results if r.error is not None]
 
     return {
+        'scan_id': scan_id,
         'query': query,
         'sources': [_result_to_dict(r) for r in results],
         'sources_hit': sources_hit,
