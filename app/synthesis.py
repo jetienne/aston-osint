@@ -1,9 +1,15 @@
+import asyncio
 import json
+import logging
 from datetime import datetime, timezone
 
 import anthropic
 
 from app.config import ANTHROPIC_API_KEY
+
+logger = logging.getLogger(__name__)
+
+MAX_INPUT_CHARS = 100000
 
 SYSTEM_PROMPT = """You are an intelligence analyst producing UHNW prospect briefs for a luxury brand's compliance and sales teams.
 
@@ -81,21 +87,12 @@ async def synthesize_brief(query: str, enriched_results: list) -> dict:
     if not ANTHROPIC_API_KEY:
         return _fallback_brief(query, enriched_results)
 
-    enriched_data = []
-    for result in enriched_results:
-        if hasattr(result, 'source'):
-            source_data = {
-                'source': result.source,
-                'matches': [
-                    _truncate_match(m)
-                    for m in result.matches[:10]
-                ],
-            }
-        else:
-            source_data = result
-        enriched_data.append(source_data)
-
+    enriched_data = _build_enriched_data(enriched_results)
     enriched_json = json.dumps(enriched_data, indent=2, default=str)
+
+    if len(enriched_json) > MAX_INPUT_CHARS:
+        logger.warning(f'Enriched data too large ({len(enriched_json)} chars), truncating')
+        enriched_json = enriched_json[:MAX_INPUT_CHARS] + '\n... (truncated for token limit)'
 
     prompt = USER_PROMPT_TEMPLATE.format(
         subject_name=query,
@@ -103,12 +100,23 @@ async def synthesize_brief(query: str, enriched_results: list) -> dict:
     )
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    response = client.messages.create(
-        model='claude-sonnet-4-6',
-        max_tokens=8192,
-        system=SYSTEM_PROMPT,
-        messages=[{'role': 'user', 'content': prompt}],
-    )
+
+    for attempt in range(3):
+        try:
+            response = client.messages.create(
+                model='claude-sonnet-4-6',
+                max_tokens=8192,
+                system=SYSTEM_PROMPT,
+                messages=[{'role': 'user', 'content': prompt}],
+            )
+            break
+        except anthropic.RateLimitError:
+            wait = 30 * (attempt + 1)
+            logger.warning(f'Rate limited, waiting {wait}s (attempt {attempt + 1}/3)')
+            await asyncio.sleep(wait)
+    else:
+        logger.error('Rate limited after 3 retries, using fallback brief')
+        return _fallback_brief(query, enriched_results)
 
     response_text = response.content[0].text.strip()
     if response_text.startswith('```'):
@@ -120,6 +128,20 @@ async def synthesize_brief(query: str, enriched_results: list) -> dict:
     return brief
 
 
+def _build_enriched_data(enriched_results: list) -> list:
+    enriched_data = []
+    for result in enriched_results:
+        if hasattr(result, 'source'):
+            source_data = {
+                'source': result.source,
+                'matches': [_truncate_match(m) for m in result.matches[:5]],
+            }
+        else:
+            source_data = result
+        enriched_data.append(source_data)
+    return enriched_data
+
+
 def _truncate_match(m):
     data = dict(m.data)
     if 'enriched_articles' in data:
@@ -129,11 +151,16 @@ def _truncate_match(m):
     if 'beneficiaires_effectifs' in data:
         data['beneficiaires_effectifs'] = data['beneficiaires_effectifs'][:10]
     if 'finances' in data:
-        data['finances'] = data['finances'][:5]
+        data['finances'] = data['finances'][:3]
     if 'actes' in data:
-        data['actes'] = data['actes'][:5]
+        data['actes'] = data['actes'][:3]
     if 'bodacc' in data:
-        data['bodacc'] = data['bodacc'][:5]
+        data['bodacc'] = data['bodacc'][:3]
+    if 'properties' in data and isinstance(data['properties'], dict):
+        props = data['properties']
+        for key in list(props.keys()):
+            if isinstance(props[key], list) and len(props[key]) > 5:
+                props[key] = props[key][:5]
     return {'name': m.name, 'type': m.type, 'summary': m.summary, 'data': data}
 
 
