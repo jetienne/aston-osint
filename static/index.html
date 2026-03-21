@@ -68,9 +68,9 @@
 
       btn.disabled = true;
       btn.textContent = 'Scanning...';
-      statusEl.textContent = 'Querying 5 sources in parallel...';
       wizardEl.style.display = 'none';
       resultsEl.style.display = 'none';
+      showLoadingState();
 
       try {
         const body = { name };
@@ -92,6 +92,7 @@
         currentFacetIndex = 0;
         selectedFilters = {};
 
+        statusEl.style.display = 'none';
         statusEl.textContent = '';
 
         if (facets.length > 0) {
@@ -287,6 +288,57 @@
         meta.textContent += ' | ' + data.duration_ms + 'ms';
       }
       resultsEl.appendChild(meta);
+    }
+
+    const SOURCES = [
+      { name: 'OCCRP Aleph', icon: 'https://aleph.occrp.org/favicon.ico', desc: 'Investigations & corporate registries' },
+      { name: 'OpenSanctions', icon: 'https://www.opensanctions.org/favicon.ico', desc: 'Sanctions & PEP lists' },
+      { name: 'ICIJ OffshoreLeaks', icon: 'https://offshoreleaks.icij.org/favicon.ico', desc: 'Offshore entities & leaks' },
+      { name: 'Pappers', icon: 'https://www.pappers.fr/favicon.ico', desc: 'French company directors' },
+      { name: 'GDELT', icon: 'https://www.gdeltproject.org/favicon.ico', desc: 'Global news monitoring' },
+    ];
+
+    function showLoadingState() {
+      statusEl.style.display = 'block';
+      statusEl.textContent = '';
+
+      const container = document.createElement('div');
+      container.className = 'loading-sources';
+
+      for (const source of SOURCES) {
+        const item = document.createElement('div');
+        item.className = 'loading-source';
+
+        const icon = document.createElement('img');
+        icon.src = source.icon;
+        icon.alt = '';
+        icon.className = 'loading-icon';
+        icon.onerror = function() { this.style.display = 'none'; };
+        item.appendChild(icon);
+
+        const text = document.createElement('div');
+        text.className = 'loading-text';
+
+        const name = document.createElement('div');
+        name.className = 'loading-name';
+        name.textContent = source.name;
+        text.appendChild(name);
+
+        const desc = document.createElement('div');
+        desc.className = 'loading-desc';
+        desc.textContent = source.desc;
+        text.appendChild(desc);
+
+        item.appendChild(text);
+
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        item.appendChild(spinner);
+
+        container.appendChild(item);
+      }
+
+      statusEl.appendChild(container);
     }
   </script>
 </body>
