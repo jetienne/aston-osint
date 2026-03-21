@@ -27,6 +27,10 @@ class OpenSanctionsAdapter(BaseAdapter):
         if nationality:
             body['queries']['q1']['properties']['nationality'] = [nationality]
 
+        birth_year = kwargs.get('birth_year')
+        if birth_year:
+            body['queries']['q1']['properties']['birthDate'] = [str(birth_year)]
+
         async with self._client() as client:
             resp = await client.post(
                 f'{self.BASE_URL}/match/default',

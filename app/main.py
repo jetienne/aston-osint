@@ -11,6 +11,7 @@ class ScanRequest(BaseModel):
     name: str
     nationality: str | None = None
     company: str | None = None
+    birth_year: int | None = None
     hints: str | None = None
 
 
@@ -45,6 +46,8 @@ async def scan(request: ScanRequest):
         kwargs['nationality'] = request.nationality
     if request.company:
         kwargs['company'] = request.company
+    if request.birth_year:
+        kwargs['birth_year'] = request.birth_year
 
     result = await run_scan(request.name.strip(), **kwargs)
     return result

@@ -37,6 +37,10 @@
         <input type="text" id="nationality" name="nationality" placeholder="e.g. Russia, France">
       </div>
       <div>
+        <label for="birth_year">Birth year</label>
+        <input type="number" id="birth_year" name="birth_year" placeholder="e.g. 1965" min="1900" max="2010">
+      </div>
+      <div>
         <label for="company">Known company</label>
         <input type="text" id="company" name="company" placeholder="e.g. Renova Group">
       </div>
@@ -71,9 +75,11 @@
       try {
         const body = { name };
         const nationality = document.getElementById('nationality').value.trim();
+        const birth_year = document.getElementById('birth_year').value.trim();
         const company = document.getElementById('company').value.trim();
         const hints = document.getElementById('hints').value.trim();
         if (nationality) body.nationality = nationality;
+        if (birth_year) body.birth_year = parseInt(birth_year);
         if (company) body.company = company;
         if (hints) body.hints = hints;
 
