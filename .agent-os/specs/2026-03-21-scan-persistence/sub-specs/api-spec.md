@@ -4,12 +4,79 @@ This is the API specification for the spec detailed in @.agent-os/specs/2026-03-
 
 ## Endpoints
 
+### POST /api/v1/scan (updated — now async)
+
+**Purpose:** Start a scan, returns immediately
+**Parameters:**
+```json
+{
+  "name": "string (required)",
+  "nationality": "string (optional)",
+  "company": "string (optional)",
+  "birth_year": "number (optional)"
+}
+```
+**Response (immediate):**
+```json
+{
+  "scan_id": "uuid",
+  "status": "pending"
+}
+```
+
+### GET /api/v1/scans/{scan_id}
+
+**Purpose:** Get scan status and results (used for polling and history detail)
+
+**Response (running):**
+```json
+{
+  "id": "uuid",
+  "query": "Vladimir Putin",
+  "kwargs": {"nationality": "Russia"},
+  "status": "running",
+  "created_at": "2026-03-21T15:30:00"
+}
+```
+
+**Response (complete):**
+```json
+{
+  "id": "uuid",
+  "query": "Vladimir Putin",
+  "kwargs": {"nationality": "Russia"},
+  "status": "complete",
+  "raw_results": [...],
+  "filtered_results": [...],
+  "disambiguation": { "has_ambiguous": true, "facets": [...] },
+  "sources_hit": ["aleph", "opensanctions"],
+  "sources_failed": ["gdelt"],
+  "duration_ms": 5200,
+  "created_at": "2026-03-21T15:30:00",
+  "completed_at": "2026-03-21T15:30:05"
+}
+```
+
+**Response (failed):**
+```json
+{
+  "id": "uuid",
+  "query": "Vladimir Putin",
+  "status": "failed",
+  "error": "All sources timed out",
+  "created_at": "2026-03-21T15:30:00"
+}
+```
+
+**Errors:**
+- 404: scan_id not found
+
 ### GET /api/v1/scans
 
 **Purpose:** List all scans, most recent first
 **Parameters:**
-- `limit` (query, optional, default 50): max results
-- `offset` (query, optional, default 0): pagination offset
+- `limit` (query, optional, default 50)
+- `offset` (query, optional, default 0)
 
 **Response:**
 ```json
@@ -18,8 +85,8 @@ This is the API specification for the spec detailed in @.agent-os/specs/2026-03-
     {
       "id": "uuid",
       "query": "Vladimir Putin",
-      "kwargs": {"nationality": "Russia"},
-      "sources_hit": ["aleph", "opensanctions", "icij"],
+      "status": "complete",
+      "sources_hit": ["aleph", "opensanctions"],
       "sources_failed": ["gdelt"],
       "match_count": 4,
       "duration_ms": 5200,
@@ -30,43 +97,16 @@ This is the API specification for the spec detailed in @.agent-os/specs/2026-03-
 }
 ```
 
-### GET /api/v1/scans/{scan_id}
+### POST /api/v1/scan/{scan_id}/refine (updated)
 
-**Purpose:** Get full scan detail with raw and filtered results
-**Response:**
+**Change:** Reads raw_results from database. Updates filtered_results in database after refining.
+
+**Parameters:**
 ```json
 {
-  "id": "uuid",
-  "query": "Vladimir Putin",
-  "kwargs": {"nationality": "Russia"},
-  "raw_results": [
-    {
-      "source": "opensanctions",
-      "query": "Vladimir Putin",
-      "matches": [...],
-      "duration_ms": 320,
-      "error": null
-    }
-  ],
-  "filtered_results": [
-    {
-      "source": "opensanctions",
-      "query": "Vladimir Putin",
-      "matches": [...],
-      "duration_ms": 320,
-      "error": null
-    }
-  ],
-  "sources_hit": ["aleph", "opensanctions", "icij"],
-  "sources_failed": ["gdelt"],
-  "duration_ms": 5200,
-  "created_at": "2026-03-21T15:30:00"
+  "filters": { "country": ["Russia"] },
+  "dismissed": [2]
 }
 ```
 
-**Errors:**
-- 404: scan_id not found
-
-### POST /api/v1/scan/{scan_id}/refine (updated)
-
-**Change:** Reads from SQLite database instead of in-memory store. Updates `filtered_results` in the database after refining.
+**Response:** Same as GET /api/v1/scans/{scan_id} with updated filtered_results.

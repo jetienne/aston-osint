@@ -1,3 +1,3 @@
 # Spec Summary (Lite)
 
-Persist every scan in SQLite — store query, raw results (from sources), and filtered results (after entity resolution). Display scan history as a list with detail view. Replaces the in-memory scan store so scans survive restarts and serve as an audit trail.
+Make scans async (POST returns immediately, background execution, UI polls) and persist everything in SQLite. Store query, raw results, filtered results, status. History page shows all past scans with detail view. Replaces in-memory scan store.
