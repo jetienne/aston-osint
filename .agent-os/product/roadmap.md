@@ -3,16 +3,16 @@
 ## Phase 1: GitOps Infrastructure
 
 **Goal:** Deploy a Docker-based FastAPI service on Hetzner VPS with GitOps workflow
-**Success Criteria:** git push + manual workflow trigger deploys in under 90 seconds; API responds on HTTPS with API key auth
+**Success Criteria:** git push + manual workflow trigger deploys in under 90 seconds; API responds on HTTPS
 
 ### Features
 
-- [ ] Dockerfile for FastAPI service `S`
-- [ ] Setup VPS workflow (system deps, Docker, deploy user, nginx, certbot) `M`
-- [ ] Deploy workflow (docker build, restart, health check) `M`
-- [ ] Nginx reverse proxy with Let's Encrypt HTTPS `S`
+- [x] Dockerfile for FastAPI service `S`
+- [x] Setup VPS workflow (system deps, Docker, deploy user, nginx, certbot) `M`
+- [x] Deploy workflow (docker build, restart, health check) `M`
+- [x] Nginx reverse proxy with Let's Encrypt HTTPS `S`
+- [x] Firewall hardening (UFW: 22, 80, 443 only) `XS`
 - [ ] API key authentication middleware `XS`
-- [ ] Firewall hardening (UFW: 22, 80, 443 only) `XS`
 
 ### Dependencies
 
@@ -26,13 +26,15 @@
 
 ### Features
 
-- [ ] Base adapter interface (async, 30s timeout, normalised output) `S`
-- [ ] OCCRP Aleph adapter `M`
-- [ ] OpenSanctions adapter `M`
-- [ ] ICIJ OffshoreLeaks adapter `S`
-- [ ] Pappers adapter `S`
-- [ ] GDELT adapter `S`
-- [ ] Parallel fan-out orchestrator (asyncio.gather) `S`
+- [x] Base adapter interface (async, 30s timeout, normalised output) `S`
+- [x] OCCRP Aleph adapter `M`
+- [x] OpenSanctions adapter (POST /match/default) `M`
+- [x] ICIJ OffshoreLeaks adapter (POST /reconcile) `S`
+- [x] Pappers adapter (api_token query param) `S`
+- [x] GDELT adapter (retry with backoff for 429) `S`
+- [x] Parallel fan-out orchestrator (asyncio.gather) `S`
+- [x] POST /api/v1/scan endpoint `S`
+- [x] Ops web form (name, nationality, birth year, company, hints) `S`
 
 ### Dependencies
 
@@ -50,31 +52,14 @@
 - [ ] Intelligence brief JSON schema (identity, entities, sanctions, offshore, press, risk score) `S`
 - [ ] HTML report template `M`
 - [ ] WeasyPrint PDF generation `S`
-- [ ] POST /api/v1/scan endpoint (full pipeline: sources → Claude → PDF) `M`
+- [ ] PDF download from web form `S`
 
 ### Dependencies
 
 - Phase 2 complete
 - Claude API access (Anthropic API key)
 
-## Phase 4: Ops Web Form
-
-**Goal:** Provide a simple web interface for non-technical ops staff to run scans
-**Success Criteria:** Ops user enters a name in a browser form, receives a PDF download
-
-### Features
-
-- [ ] Single-page HTML form (name, nationality, company, hints, output format) `S`
-- [ ] Form submission to POST /api/v1/scan `XS`
-- [ ] Inline PDF display or download trigger `S`
-- [ ] Loading state and error handling `XS`
-- [ ] Served by nginx at root path (no build step) `XS`
-
-### Dependencies
-
-- Phase 3 complete
-
-## Phase 5: Aston Platform Integration (Future)
+## Phase 4: Aston Platform Integration (Future)
 
 **Goal:** Connect Aston Rails app to OSINT pipeline
 **Success Criteria:** New client creation in Aston triggers an automatic scan
@@ -87,10 +72,10 @@
 
 ### Dependencies
 
-- Phase 4 complete
+- Phase 3 complete
 - Decision to integrate (DEC-TBD)
 
-## Phase 6: Monitoring & Extended Sources (Future)
+## Phase 5: Monitoring & Extended Sources (Future)
 
 **Goal:** Add re-screening, alerting, and additional data sources
 **Success Criteria:** Scheduled re-scans detect changes; alerts sent on HIGH/CRITICAL risk
@@ -106,4 +91,4 @@
 
 ### Dependencies
 
-- Phase 5 complete (or standalone if integration deferred)
+- Phase 4 complete (or standalone if integration deferred)
