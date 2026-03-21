@@ -11,34 +11,36 @@ class PappersAdapter(BaseAdapter):
         if not PAPPERS_API_KEY:
             return SourceResult(source=self.name, query=query, error='PAPPERS_API_KEY not configured')
 
+        matches = []
+
         async with self._client() as client:
             resp = await client.get(
-                f'{self.BASE_URL}/recherche',
+                f'{self.BASE_URL}/recherche-dirigeants',
                 params={'q': query, 'par_page': 10, 'api_token': PAPPERS_API_KEY},
             )
             resp.raise_for_status()
             data = resp.json()
 
-        matches = []
-        for company in data.get('resultats', []):
-            siren = company.get('siren', '')
-            name = company.get('nom_entreprise', query)
-            forme = company.get('forme_juridique', '')
-            dirigeants = company.get('dirigeants', [])
-            beneficiaires = company.get('beneficiaires_effectifs', [])
+        for dirigeant in data.get('resultats', []):
+            nom = dirigeant.get('nom', '')
+            prenom = dirigeant.get('prenom', '')
+            full_name = f'{prenom} {nom}'.strip() or query
+            qualite = dirigeant.get('qualite', '')
+            entreprises = dirigeant.get('entreprises', [])
 
-            dirigeant_names = [d.get('nom_complet', '') for d in dirigeants[:5]]
+            company_names = [e.get('nom_entreprise', '') for e in entreprises[:3]]
+            siren_list = [e.get('siren', '') for e in entreprises[:3]]
 
             matches.append(SourceMatch(
-                name=name,
-                type='company',
-                summary=f'{forme} — SIREN: {siren}, dirigeants: {", ".join(dirigeant_names)}',
-                url=f'https://www.pappers.fr/entreprise/{siren}',
+                name=full_name,
+                type='person',
+                summary=f'{qualite} — {", ".join(company_names)}',
+                url=f'https://www.pappers.fr/entreprise/{siren_list[0]}' if siren_list else '',
                 data={
-                    'siren': siren,
-                    'forme_juridique': forme,
-                    'dirigeants': dirigeants[:5],
-                    'beneficiaires': beneficiaires[:5],
+                    'nom': nom,
+                    'prenom': prenom,
+                    'qualite': qualite,
+                    'entreprises': entreprises[:3],
                 },
             ))
 
