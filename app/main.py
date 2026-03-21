@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from app.config import OPENSANCTIONS_API_KEY, PAPPERS_API_KEY
 from app.orchestrator import ADAPTERS, run_scan
 
 app = FastAPI(title='Aston OSINT', version='0.1.0')
@@ -27,6 +28,10 @@ def status():
             {'name': a.name, 'available': True}
             for a in ADAPTERS
         ],
+        'keys': {
+            'opensanctions': bool(OPENSANCTIONS_API_KEY),
+            'pappers': bool(PAPPERS_API_KEY),
+        },
     }
 
 

@@ -9,7 +9,7 @@ class GDELTAdapter(BaseAdapter):
     BASE_URL = 'https://api.gdeltproject.org/api/v2'
 
     async def _search(self, query: str, **kwargs) -> SourceResult:
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
 
         async with self._client() as client:
             resp = await client.get(
