@@ -3,13 +3,14 @@ from app.resolution.name_matcher import filter_results
 
 
 def _make_result(source, matches):
+    if isinstance(matches[0], str):
+        match_list = [SourceMatch(name=name, type='person', summary='', url='') for name in matches]
+    else:
+        match_list = matches
     return SourceResult(
         source=source,
         query='test',
-        matches=[
-            SourceMatch(name=name, type='person', summary='', url='')
-            for name in matches
-        ],
+        matches=match_list,
     )
 
 
@@ -57,3 +58,23 @@ class TestFilterResults:
         assert filtered[0].matches[0].name == 'Irina Dunaeva'
         assert len(filtered[1].matches) == 1
         assert filtered[1].matches[0].name == 'Dunaeva Irina'
+
+    def test_matches_via_alt_names_in_data(self):
+        match = SourceMatch(
+            name='فلاديمير بوتين',
+            type='person', summary='', url='',
+            data={'properties': {'name': ['فلاديمير بوتين', 'Vladimir Putin', 'Владимир Путин']}},
+        )
+        results = [_make_result('opensanctions', [match])]
+        filtered = filter_results('Vladimir Putin', results)
+        assert len(filtered[0].matches) == 1
+
+    def test_no_match_even_with_alt_names(self):
+        match = SourceMatch(
+            name='Volodymyr Petin',
+            type='person', summary='', url='',
+            data={'properties': {'name': ['Volodymyr Petin', 'Володимир Петін']}},
+        )
+        results = [_make_result('opensanctions', [match])]
+        filtered = filter_results('Vladimir Putin', results)
+        assert len(filtered[0].matches) == 0

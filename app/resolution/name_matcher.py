@@ -32,6 +32,18 @@ def is_name_match(query_name: str, result_name: str) -> bool:
     return query_tokens.issubset(result_tokens)
 
 
+def _match_any_name(query_name: str, match) -> bool:
+    if is_name_match(query_name, match.name):
+        return True
+
+    alt_names = match.data.get('properties', {}).get('name', [])
+    for alt in alt_names:
+        if isinstance(alt, str) and is_name_match(query_name, alt):
+            return True
+
+    return False
+
+
 def filter_results(query_name: str, results: list) -> list:
     from app.models import SourceResult
 
@@ -41,7 +53,7 @@ def filter_results(query_name: str, results: list) -> list:
             filtered.append(result)
             continue
 
-        kept_matches = [m for m in result.matches if is_name_match(query_name, m.name)]
+        kept_matches = [m for m in result.matches if _match_any_name(query_name, m)]
         filtered.append(SourceResult(
             source=result.source,
             query=result.query,
