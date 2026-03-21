@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.adapters.pappers import PappersAdapter
-from app.models import SourceMatch, SourceResult
 
 
 def _mock_response(json_data, status_code=200):
@@ -128,7 +127,7 @@ class TestPappersCompanySearch:
 
         with patch.object(adapter, '_client', return_value=mock_client), \
              patch('app.adapters.pappers.PAPPERS_API_KEY', 'test-key'):
-            result = await adapter._search('Acme', company=True)
+            await adapter._search('Acme', company=True)
 
         mock_client.get.assert_called_once()
         call_url = mock_client.get.call_args[0][0]
@@ -191,7 +190,7 @@ class TestPappersCompanySearch:
 
         with patch.object(adapter, '_client', return_value=mock_client), \
              patch('app.adapters.pappers.PAPPERS_API_KEY', 'test-key'):
-            result = await adapter._search('Jean Dupont')
+            await adapter._search('Jean Dupont')
 
         call_url = mock_client.get.call_args[0][0]
         assert '/recherche-dirigeants' in call_url
@@ -230,7 +229,7 @@ class TestPappersMergedSearch:
 
         with patch.object(adapter, '_client', return_value=mock_client), \
              patch('app.adapters.pappers.PAPPERS_API_KEY', 'test-key'):
-            result = await adapter._search('Dupont', company=True, merge=True)
+            await adapter._search('Dupont', company=True, merge=True)
 
         assert mock_client.get.call_count == 2
 
@@ -373,7 +372,7 @@ class TestPappersCompanyDetails:
 
         with patch.object(adapter, '_client', return_value=mock_client), \
              patch('app.adapters.pappers.PAPPERS_API_KEY', 'test-key'):
-            result = await adapter._search('Acme', company=True, enrich=True)
+            await adapter._search('Acme', company=True, enrich=True)
 
         assert mock_client.get.call_count == 2
         detail_call_url = mock_client.get.call_args_list[1][0][0]
@@ -421,7 +420,7 @@ class TestPappersPagination:
 
         with patch.object(adapter, '_client', return_value=mock_client), \
              patch('app.adapters.pappers.PAPPERS_API_KEY', 'test-key'):
-            result = await adapter._search('Dupont')
+            await adapter._search('Dupont')
 
         assert mock_client.get.call_count == 1
 
@@ -459,7 +458,7 @@ class TestPappersPagination:
 
         with patch.object(adapter, '_client', return_value=mock_client), \
              patch('app.adapters.pappers.PAPPERS_API_KEY', 'test-key'):
-            result = await adapter._search('Dupont', max_pages=2)
+            await adapter._search('Dupont', max_pages=2)
 
         page_params = [
             call.kwargs.get('params', {}).get('page') or call[1].get('params', {}).get('page')
