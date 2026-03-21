@@ -1,6 +1,17 @@
+import re
+
 from app.adapters.base import BaseAdapter
 from app.config import OPENSANCTIONS_API_KEY
 from app.models import SourceMatch, SourceResult
+
+
+def _best_latin_name(names: list, fallback: str) -> str:
+    if not names:
+        return fallback
+    for n in names:
+        if isinstance(n, str) and re.match(r'^[A-Za-z]', n):
+            return n
+    return names[0]
 
 
 class OpenSanctionsAdapter(BaseAdapter):
@@ -48,7 +59,7 @@ class OpenSanctionsAdapter(BaseAdapter):
             properties = result.get('properties', {})
             datasets = result.get('datasets', [])
             names = properties.get('name', [query])
-            name = names[0] if names else query
+            name = _best_latin_name(names, query)
             schema = result.get('schema', 'Entity')
 
             matches.append(SourceMatch(
