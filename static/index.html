@@ -134,15 +134,31 @@
       const selected = new Set();
 
       for (const option of facet.options) {
+        const val = typeof option === 'string' ? option : option.value;
+        const label = typeof option === 'string' ? option : option.label;
+        const detail = typeof option === 'object' ? option.detail : '';
+
         const pill = document.createElement('div');
         pill.className = 'pill';
-        pill.textContent = option;
+
+        const pillLabel = document.createElement('span');
+        pillLabel.className = 'pill-label';
+        pillLabel.textContent = label;
+        pill.appendChild(pillLabel);
+
+        if (detail) {
+          const pillDetail = document.createElement('span');
+          pillDetail.className = 'pill-detail';
+          pillDetail.textContent = detail;
+          pill.appendChild(pillDetail);
+        }
+
         pill.addEventListener('click', () => {
-          if (selected.has(option)) {
-            selected.delete(option);
+          if (selected.has(val)) {
+            selected.delete(val);
             pill.classList.remove('selected');
           } else {
-            selected.add(option);
+            selected.add(val);
             pill.classList.add('selected');
           }
         });

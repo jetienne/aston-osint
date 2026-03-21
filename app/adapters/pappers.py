@@ -40,7 +40,17 @@ class PappersAdapter(BaseAdapter):
                     'nom': nom,
                     'prenom': prenom,
                     'qualite': qualite,
-                    'entreprises': entreprises[:3],
+                    'entreprises': [
+                        {
+                            'nom_entreprise': e.get('nom_entreprise', ''),
+                            'siren': e.get('siren', ''),
+                            'forme_juridique': e.get('forme_juridique', ''),
+                            'domaine_activite': e.get('domaine_activite', ''),
+                            'libelle_code_naf': e.get('libelle_code_naf', ''),
+                            'siege': e.get('siege', {}),
+                        }
+                        for e in entreprises[:5]
+                    ],
                 },
             ))
 

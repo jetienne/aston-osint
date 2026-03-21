@@ -2,6 +2,10 @@ from app.models import SourceMatch, SourceResult
 from app.resolution.disambiguation import extract_facets, _extract_year
 
 
+def _option_values(facet):
+    return [o['value'] if isinstance(o, dict) else o for o in facet['options']]
+
+
 def _match(name, data=None, confidence=None):
     return SourceMatch(
         name=name, type='person', summary='', url='',
@@ -54,8 +58,9 @@ class TestExtractFacets:
         ])]
         facets = extract_facets(results)['facets']
         country_facet = next(f for f in facets if f['field'] == 'country')
-        assert 'Russia' in country_facet['options']
-        assert 'France' in country_facet['options']
+        values = _option_values(country_facet)
+        assert 'Russia' in values
+        assert 'France' in values
 
     def test_birth_year_from_properties(self):
         results = [_result([
@@ -64,8 +69,9 @@ class TestExtractFacets:
         ])]
         facets = extract_facets(results)['facets']
         year_facet = next(f for f in facets if f['field'] == 'birth_year')
-        assert '1968' in year_facet['options']
-        assert '1975' in year_facet['options']
+        values = _option_values(year_facet)
+        assert '1968' in values
+        assert '1975' in values
 
     def test_companies_from_entreprises(self):
         results = [_result([
@@ -74,8 +80,9 @@ class TestExtractFacets:
         ])]
         facets = extract_facets(results)['facets']
         company_facet = next(f for f in facets if f['field'] == 'company')
-        assert 'Gazprom' in company_facet['options']
-        assert 'TOTAL SA' in company_facet['options']
+        values = _option_values(company_facet)
+        assert 'Gazprom' in values
+        assert 'TOTAL SA' in values
 
     def test_no_dataset_facet(self):
         results = [_result([
@@ -117,7 +124,7 @@ class TestExtractFacets:
         ])]
         facets = extract_facets(results)['facets']
         country_facet = next(f for f in facets if f['field'] == 'country')
-        assert 'Russia' in country_facet['options']
+        assert 'Russia' in _option_values(country_facet)
 
     def test_ignores_empty_values(self):
         results = [_result([
@@ -135,4 +142,4 @@ class TestExtractFacets:
         ])]
         facets = extract_facets(results)['facets']
         country_facet = next(f for f in facets if f['field'] == 'country')
-        assert country_facet['options'] == ['Australia', 'Belgium', 'France']
+        assert _option_values(country_facet) == ['Australia', 'Belgium', 'France']

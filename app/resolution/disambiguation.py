@@ -4,7 +4,7 @@ from app.models import SourceResult
 def extract_facets(results: list[SourceResult]) -> dict:
     countries = set()
     birth_years = set()
-    companies = set()
+    companies = {}
 
     for result in results:
         for match in result.matches:
@@ -36,16 +36,48 @@ def extract_facets(results: list[SourceResult]) -> dict:
                 items = data.get(key, [])
                 for item in items:
                     name = item.get('nom_entreprise') or item.get('name')
-                    if name:
-                        companies.add(name)
+                    if name and name not in companies:
+                        siege = item.get('siege', {})
+                        city = siege.get('ville', '')
+                        country = siege.get('pays', '')
+                        forme = item.get('forme_juridique', '')
+                        activite = item.get('domaine_activite') or item.get('libelle_code_naf', '')
+
+                        details = []
+                        if city:
+                            details.append(city)
+                        if country and country != 'France':
+                            details.append(country)
+                        if forme:
+                            details.append(forme)
+                        if activite:
+                            details.append(activite)
+
+                        companies[name] = {
+                            'value': name,
+                            'label': name,
+                            'detail': ' — '.join(details) if details else '',
+                        }
 
     facets = []
     if len(countries) >= 2:
-        facets.append({'field': 'country', 'label': 'Country', 'options': sorted(countries)})
+        facets.append({
+            'field': 'country',
+            'label': 'Country',
+            'options': [{'value': c, 'label': c} for c in sorted(countries)],
+        })
     if len(birth_years) >= 2:
-        facets.append({'field': 'birth_year', 'label': 'Birth year', 'options': sorted(birth_years)})
+        facets.append({
+            'field': 'birth_year',
+            'label': 'Birth year',
+            'options': [{'value': y, 'label': y} for y in sorted(birth_years)],
+        })
     if len(companies) >= 2:
-        facets.append({'field': 'company', 'label': 'Company', 'options': sorted(companies)})
+        facets.append({
+            'field': 'company',
+            'label': 'Company',
+            'options': sorted(companies.values(), key=lambda c: c['value']),
+        })
 
     has_ambiguous = any(
         m.confidence in ('MEDIUM', 'LOW')

@@ -243,6 +243,28 @@ button:disabled {
   border-color: #b3714f;
 }
 
+.pill-label {
+  display: block;
+  font-weight: 500;
+}
+
+.pill-detail {
+  display: block;
+  font-size: 0.65rem;
+  opacity: 0.65;
+  margin-top: 1px;
+  line-height: 1.3;
+}
+
+.pill.selected .pill-detail {
+  opacity: 0.8;
+}
+
+.pill:has(.pill-detail) {
+  padding: 6px 16px 8px;
+  text-align: left;
+}
+
 .wizard-actions {
   display: flex;
   gap: 10px;
