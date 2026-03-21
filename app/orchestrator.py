@@ -7,6 +7,7 @@ from app.adapters.icij import ICIJAdapter
 from app.adapters.opensanctions import OpenSanctionsAdapter
 from app.adapters.pappers import PappersAdapter
 from app.models import SourceResult
+from app.resolution.name_matcher import filter_results
 
 ADAPTERS = [
     AlephAdapter(),
@@ -21,7 +22,9 @@ async def run_scan(query: str, **kwargs) -> dict:
     start = time.monotonic()
 
     tasks = [adapter.search(query, **kwargs) for adapter in ADAPTERS]
-    results: list[SourceResult] = await asyncio.gather(*tasks)
+    raw_results: list[SourceResult] = await asyncio.gather(*tasks)
+
+    results = filter_results(query, raw_results)
 
     sources_hit = [r.source for r in results if r.error is None]
     sources_failed = [r.source for r in results if r.error is not None]
