@@ -11,20 +11,29 @@ class GDELTAdapter(BaseAdapter):
     async def _search(self, query: str, **kwargs) -> SourceResult:
         await asyncio.sleep(2)
 
+        data = None
         async with self._client() as client:
-            resp = await client.get(
-                f'{self.BASE_URL}/doc/doc',
-                params={
-                    'query': f'"{query}"',
-                    'mode': 'artlist',
-                    'format': 'json',
-                    'timespan': '3months',
-                    'maxrecords': 10,
-                    'sort': 'DateDesc',
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
+            for attempt in range(3):
+                resp = await client.get(
+                    f'{self.BASE_URL}/doc/doc',
+                    params={
+                        'query': f'"{query}"',
+                        'mode': 'artlist',
+                        'format': 'json',
+                        'timespan': '3months',
+                        'maxrecords': 10,
+                        'sort': 'DateDesc',
+                    },
+                )
+                if resp.status_code == 429:
+                    await asyncio.sleep(3 * (attempt + 1))
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                break
+
+        if data is None:
+            return SourceResult(source=self.name, query=query, error='Rate limited after 3 retries')
 
         matches = []
         for article in data.get('articles', []):
