@@ -278,15 +278,6 @@
           summary.textContent = m.summary;
           card.appendChild(summary);
 
-          if (m.confidence) {
-            const conf = document.createElement('div');
-            conf.className = 'match-confidence';
-            const colors = { HIGH: '#0a0', MEDIUM: '#f90', LOW: '#c00' };
-            conf.style.color = colors[m.confidence] || '#999';
-            conf.textContent = m.confidence + (m.rationale ? ' — ' + m.rationale : '');
-            card.appendChild(conf);
-          }
-
           if (m.url) {
             const linkDiv = document.createElement('div');
             linkDiv.className = 'match-link';
@@ -298,20 +289,6 @@
             linkDiv.appendChild(link);
             card.appendChild(linkDiv);
           }
-
-          const actions = document.createElement('div');
-          actions.className = 'card-actions';
-          const dismissBtn = document.createElement('button');
-          dismissBtn.className = 'btn-dismiss';
-          dismissBtn.textContent = 'Dismiss';
-          dismissBtn.addEventListener('click', () => {
-            card.classList.add('dismissed');
-            dismissBtn.disabled = true;
-            dismissBtn.textContent = 'Dismissed';
-            dismissedIndices.push(idx);
-          });
-          actions.appendChild(dismissBtn);
-          card.appendChild(actions);
 
           resultsEl.appendChild(card);
         }
