@@ -4,96 +4,49 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aston OSINT</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }
-    h1 { font-size: 1.4rem; margin-bottom: 24px; display: none; }
-
-    /* Search form */
-    form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
-    label { font-size: 0.85rem; font-weight: 500; color: #555; }
-    input { padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
-    input:focus { outline: none; border-color: #333; }
-    button { padding: 10px 20px; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
-    button:hover { background: #333; }
-    button:disabled { background: #999; cursor: wait; }
-    .row { display: flex; gap: 12px; }
-    .row > div { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-
-    /* Status */
-    #status { margin-bottom: 24px; font-size: 0.85rem; color: #888; }
-
-    /* Wizard step */
-    #wizard { display: none; margin-bottom: 32px; }
-    .wizard-question { font-size: 0.95rem; font-weight: 500; margin-bottom: 12px; }
-    .wizard-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .pill { padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px; font-size: 0.85rem; cursor: pointer; user-select: none; transition: all 0.15s; }
-    .pill:hover { border-color: #999; }
-    .pill.selected { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
-    .wizard-actions { display: flex; gap: 8px; }
-    .wizard-actions button { font-size: 0.85rem; padding: 8px 16px; }
-    .btn-skip { background: #fff; color: #555; border: 1px solid #ddd; }
-    .btn-skip:hover { background: #f5f5f5; }
-
-    /* Results */
-    #results { display: none; }
-    .result-card { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
-    .result-card .source-tag { font-size: 0.7rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .result-card .match-name { font-weight: 600; font-size: 0.95rem; }
-    .result-card .match-type { color: #999; font-weight: 400; }
-    .result-card .match-summary { color: #555; font-size: 0.85rem; margin-top: 4px; }
-    .result-card .match-confidence { font-size: 0.75rem; margin-top: 4px; }
-    .result-card .match-link { font-size: 0.75rem; margin-top: 4px; }
-    .result-card .match-link a { color: #06c; text-decoration: none; }
-    .result-card .card-actions { margin-top: 8px; display: flex; gap: 8px; }
-    .result-card .card-actions button { font-size: 0.75rem; padding: 4px 12px; border-radius: 4px; }
-    .btn-dismiss { background: #fff; color: #c00; border: 1px solid #fcc; }
-    .btn-dismiss:hover { background: #fff5f5; }
-    .result-card.dismissed { opacity: 0.3; }
-    .meta { color: #999; font-size: 0.75rem; margin-top: 16px; border-top: 1px solid #eee; padding-top: 8px; }
-    .no-results { color: #999; font-size: 0.9rem; padding: 20px 0; }
-    .error-source { color: #c00; font-size: 0.8rem; margin-bottom: 8px; }
-
-    /* Nav */
-    nav { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; border-bottom: 1px solid #eee; padding-bottom: 12px; }
-    nav .logo { font-size: 1.4rem; font-weight: 700; text-decoration: none; color: #1a1a1a; }
-    nav a { font-size: 0.85rem; color: #555; text-decoration: none; }
-    nav a:hover { color: #1a1a1a; }
-    nav a.active { color: #1a1a1a; font-weight: 600; }
-  </style>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <nav>
-    <a href="/" class="logo">Aston OSINT</a>
-    <a href="/" class="active">Scan</a>
-    <a href="/sources.html">Sources</a>
-  </nav>
-
-  <form id="scan-form">
-    <div class="field">
-      <label for="name">Full name (first + last) *</label>
-      <input type="text" id="name" name="name" required placeholder="e.g. Viktor Vekselberg, Irina Dunaeva">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Aston OSINT</div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Intelligence</div>
+      <a href="/" class="sidebar-link active">Scan</a>
+      <a href="/sources.html" class="sidebar-link">Sources</a>
     </div>
-    <div class="row">
-      <div>
-        <label for="nationality">Country / nationality</label>
-        <input type="text" id="nationality" name="nationality" placeholder="e.g. Russia, France">
-      </div>
-      <div>
-        <label for="birth_year">Birth year</label>
-        <input type="number" id="birth_year" name="birth_year" placeholder="e.g. 1965" min="1900" max="2010">
-      </div>
-      <div>
-        <label for="company">Known company</label>
-        <input type="text" id="company" name="company" placeholder="e.g. Renova Group">
-      </div>
-    </div>
-    <button type="submit" id="submit-btn">Run scan</button>
-  </form>
+  </aside>
 
-  <div id="status"></div>
-  <div id="wizard"></div>
-  <div id="results"></div>
+  <main class="content">
+    <div class="page-header">
+      <h1>New Scan</h1>
+    </div>
+
+    <form id="scan-form">
+      <div class="form-field">
+        <label for="name">Full name (first + last) *</label>
+        <input type="text" id="name" name="name" required placeholder="e.g. Viktor Vekselberg, Irina Dunaeva">
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label for="nationality">Country / nationality</label>
+          <input type="text" id="nationality" name="nationality" placeholder="e.g. Russia, France">
+        </div>
+        <div class="form-field">
+          <label for="birth_year">Birth year</label>
+          <input type="number" id="birth_year" name="birth_year" placeholder="e.g. 1965" min="1900" max="2010">
+        </div>
+        <div class="form-field">
+          <label for="company">Known company</label>
+          <input type="text" id="company" name="company" placeholder="e.g. Renova Group">
+        </div>
+      </div>
+      <button type="submit" id="submit-btn">Run scan</button>
+    </form>
+
+    <div id="status"></div>
+    <div id="wizard"></div>
+    <div id="results"></div>
+  </main>
 
   <script>
     const form = document.getElementById('scan-form');
@@ -107,7 +60,6 @@
     let facets = [];
     let currentFacetIndex = 0;
     let selectedFilters = {};
-    let dismissedIndices = [];
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -139,7 +91,6 @@
         facets = (scanData.disambiguation && scanData.disambiguation.facets) || [];
         currentFacetIndex = 0;
         selectedFilters = {};
-        dismissedIndices = [];
 
         statusEl.textContent = '';
 
@@ -168,7 +119,7 @@
       wizardEl.textContent = '';
 
       const step = document.createElement('div');
-      step.style.cssText = 'color:#999;font-size:0.75rem;margin-bottom:8px;';
+      step.className = 'wizard-step';
       step.textContent = 'Step ' + (currentFacetIndex + 1) + ' of ' + facets.length;
       wizardEl.appendChild(step);
 
@@ -203,7 +154,7 @@
       actions.className = 'wizard-actions';
 
       const skipBtn = document.createElement('button');
-      skipBtn.className = 'btn-skip';
+      skipBtn.className = 'btn-secondary';
       skipBtn.textContent = 'Skip';
       skipBtn.addEventListener('click', () => {
         currentFacetIndex++;
@@ -212,6 +163,7 @@
       actions.appendChild(skipBtn);
 
       const nextBtn = document.createElement('button');
+      nextBtn.className = 'btn-primary';
       nextBtn.textContent = currentFacetIndex === facets.length - 1 ? 'Show results' : 'Next';
       nextBtn.addEventListener('click', () => {
         if (selected.size > 0) {
@@ -251,7 +203,6 @@
       resultsEl.textContent = '';
       resultsEl.style.display = 'block';
 
-      let flatIndex = 0;
       let totalMatches = 0;
 
       for (const source of data.sources) {
@@ -265,10 +216,8 @@
 
         for (const m of source.matches) {
           totalMatches++;
-          const idx = flatIndex++;
           const card = document.createElement('div');
           card.className = 'result-card';
-          card.dataset.index = idx;
 
           const tag = document.createElement('div');
           tag.className = 'source-tag';

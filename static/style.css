@@ -1,0 +1,295 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #1a1a1a;
+  display: flex;
+  min-height: 100vh;
+  background: #fff;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  border-right: 1px solid #e8e8e8;
+  padding: 24px 0;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0 20px;
+  margin-bottom: 32px;
+  color: #1a1a1a;
+}
+
+.sidebar-section {
+  margin-bottom: 24px;
+}
+
+.sidebar-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #999;
+  padding: 0 20px;
+  margin-bottom: 8px;
+}
+
+.sidebar-link {
+  display: block;
+  padding: 6px 20px;
+  font-size: 0.9rem;
+  color: #555;
+  text-decoration: none;
+  transition: all 0.1s;
+}
+
+.sidebar-link:hover {
+  color: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.sidebar-link.active {
+  color: #1a1a1a;
+  font-weight: 600;
+  background: #f0f0f0;
+}
+
+/* Content */
+.content {
+  flex: 1;
+  margin-left: 220px;
+  padding: 32px 40px;
+  max-width: 800px;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-header h1 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+/* Forms */
+form {
+  margin-bottom: 32px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-row .form-field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #777;
+}
+
+input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+}
+
+input:focus {
+  outline: none;
+  border-color: #999;
+}
+
+/* Buttons */
+.btn-primary, button[type="submit"] {
+  padding: 8px 20px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-primary:hover, button[type="submit"]:hover {
+  background: #333;
+}
+
+button:disabled {
+  background: #bbb;
+  cursor: wait;
+}
+
+.btn-secondary {
+  padding: 8px 20px;
+  background: #fff;
+  color: #555;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+/* Status */
+#status {
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+/* Wizard */
+#wizard {
+  display: none;
+  margin-bottom: 28px;
+  padding: 20px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+
+.wizard-step {
+  font-size: 0.7rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.wizard-question {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+.wizard-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pill {
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+  background: #fff;
+}
+
+.pill:hover {
+  border-color: #999;
+}
+
+.pill.selected {
+  background: #1a1a1a;
+  color: #fff;
+  border-color: #1a1a1a;
+}
+
+.wizard-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Results */
+#results {
+  display: none;
+}
+
+.result-card {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+
+.source-tag {
+  font-size: 0.65rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.match-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.match-type {
+  color: #999;
+  font-weight: 400;
+}
+
+.match-summary {
+  color: #555;
+  font-size: 0.8rem;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.match-link {
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.match-link a {
+  color: #06c;
+  text-decoration: none;
+}
+
+.match-link a:hover {
+  text-decoration: underline;
+}
+
+.meta {
+  color: #999;
+  font-size: 0.7rem;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.no-results {
+  color: #999;
+  font-size: 0.9rem;
+  padding: 24px 0;
+}
+
+.error-source {
+  color: #c00;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}

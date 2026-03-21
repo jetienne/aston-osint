@@ -4,67 +4,66 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sources - Aston OSINT</title>
+  <link rel="stylesheet" href="/style.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #1a1a1a; }
-
-    nav { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; border-bottom: 1px solid #eee; padding-bottom: 12px; }
-    nav .logo { font-size: 1.4rem; font-weight: 700; text-decoration: none; color: #1a1a1a; }
-    nav a { font-size: 0.85rem; color: #555; text-decoration: none; }
-    nav a:hover { color: #1a1a1a; }
-    nav a.active { color: #1a1a1a; font-weight: 600; }
-
-    h2 { font-size: 1.1rem; margin-bottom: 20px; }
-    .source { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
-    .source-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-    .source-url { font-size: 0.8rem; margin-bottom: 8px; }
+    .source { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 16px; margin-bottom: 10px; }
+    .source-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
+    .source-url { font-size: 0.75rem; margin-bottom: 8px; }
     .source-url a { color: #06c; text-decoration: none; }
-    .source-desc { font-size: 0.85rem; color: #555; line-height: 1.5; }
-    .source-auth { font-size: 0.75rem; color: #999; margin-top: 6px; }
+    .source-url a:hover { text-decoration: underline; }
+    .source-desc { font-size: 0.8rem; color: #555; line-height: 1.5; }
+    .source-auth { font-size: 0.7rem; color: #999; margin-top: 6px; }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="/" class="logo">Aston OSINT</a>
-    <a href="/">Scan</a>
-    <a href="/sources.html" class="active">Sources</a>
-  </nav>
+  <aside class="sidebar">
+    <div class="sidebar-logo">Aston OSINT</div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Intelligence</div>
+      <a href="/" class="sidebar-link">Scan</a>
+      <a href="/sources.html" class="sidebar-link active">Sources</a>
+    </div>
+  </aside>
 
-  <h2>Data Sources</h2>
+  <main class="content">
+    <div class="page-header">
+      <h1>Data Sources</h1>
+    </div>
 
-  <div class="source">
-    <div class="source-name">OCCRP Aleph</div>
-    <div class="source-url"><a href="https://aleph.occrp.org" target="_blank" rel="noopener">aleph.occrp.org</a></div>
-    <div class="source-desc">Global archive of investigative journalism data. Includes court records, corporate registries, leaked documents, and government gazettes from the Organized Crime and Corruption Reporting Project network.</div>
-    <div class="source-auth">Free, no API key required</div>
-  </div>
+    <div class="source">
+      <div class="source-name">OCCRP Aleph</div>
+      <div class="source-url"><a href="https://aleph.occrp.org" target="_blank" rel="noopener">aleph.occrp.org</a></div>
+      <div class="source-desc">Global archive of investigative journalism data. Includes court records, corporate registries, leaked documents, and government gazettes from the Organized Crime and Corruption Reporting Project network.</div>
+      <div class="source-auth">Free, no API key required</div>
+    </div>
 
-  <div class="source">
-    <div class="source-name">OpenSanctions</div>
-    <div class="source-url"><a href="https://www.opensanctions.org" target="_blank" rel="noopener">opensanctions.org</a></div>
-    <div class="source-desc">Consolidated database of sanctioned entities and politically exposed persons (PEPs). Aggregates OFAC (US), EU consolidated list, UN Security Council, UK sanctions, and 30+ other watchlists into a single searchable API.</div>
-    <div class="source-auth">API key required (free tier available)</div>
-  </div>
+    <div class="source">
+      <div class="source-name">OpenSanctions</div>
+      <div class="source-url"><a href="https://www.opensanctions.org" target="_blank" rel="noopener">opensanctions.org</a></div>
+      <div class="source-desc">Consolidated database of sanctioned entities and politically exposed persons (PEPs). Aggregates OFAC (US), EU consolidated list, UN Security Council, UK sanctions, and 30+ other watchlists into a single searchable API.</div>
+      <div class="source-auth">API key required (free tier available)</div>
+    </div>
 
-  <div class="source">
-    <div class="source-name">ICIJ OffshoreLeaks</div>
-    <div class="source-url"><a href="https://offshoreleaks.icij.org" target="_blank" rel="noopener">offshoreleaks.icij.org</a></div>
-    <div class="source-desc">Database from the International Consortium of Investigative Journalists containing records from the Panama Papers, Paradise Papers, Pandora Papers, and other offshore leaks. Reveals offshore company structures, directors, and beneficial owners.</div>
-    <div class="source-auth">Free, no API key required</div>
-  </div>
+    <div class="source">
+      <div class="source-name">ICIJ OffshoreLeaks</div>
+      <div class="source-url"><a href="https://offshoreleaks.icij.org" target="_blank" rel="noopener">offshoreleaks.icij.org</a></div>
+      <div class="source-desc">Database from the International Consortium of Investigative Journalists containing records from the Panama Papers, Paradise Papers, Pandora Papers, and other offshore leaks. Reveals offshore company structures, directors, and beneficial owners.</div>
+      <div class="source-auth">Free, no API key required</div>
+    </div>
 
-  <div class="source">
-    <div class="source-name">Pappers</div>
-    <div class="source-url"><a href="https://www.pappers.fr" target="_blank" rel="noopener">pappers.fr</a></div>
-    <div class="source-desc">French business registry API. Searches company directors and beneficial owners across all French-registered companies. Returns SIREN numbers, legal forms, director roles, and beneficial ownership chains.</div>
-    <div class="source-auth">API key required (free tier with credit limits)</div>
-  </div>
+    <div class="source">
+      <div class="source-name">Pappers</div>
+      <div class="source-url"><a href="https://www.pappers.fr" target="_blank" rel="noopener">pappers.fr</a></div>
+      <div class="source-desc">French business registry API. Searches company directors and beneficial owners across all French-registered companies. Returns SIREN numbers, legal forms, director roles, and beneficial ownership chains.</div>
+      <div class="source-auth">API key required (free tier with credit limits)</div>
+    </div>
 
-  <div class="source">
-    <div class="source-name">GDELT</div>
-    <div class="source-url"><a href="https://www.gdeltproject.org" target="_blank" rel="noopener">gdeltproject.org</a></div>
-    <div class="source-desc">Global news monitoring system. Tracks news articles from thousands of sources worldwide in real-time. Searches for press mentions, media coverage, and public events related to a person or entity over the last 3 months.</div>
-    <div class="source-auth">Free, no API key required</div>
-  </div>
+    <div class="source">
+      <div class="source-name">GDELT</div>
+      <div class="source-url"><a href="https://www.gdeltproject.org" target="_blank" rel="noopener">gdeltproject.org</a></div>
+      <div class="source-desc">Global news monitoring system. Tracks news articles from thousands of sources worldwide in real-time. Searches for press mentions, media coverage, and public events related to a person or entity over the last 3 months.</div>
+      <div class="source-auth">Free, no API key required</div>
+    </div>
+  </main>
 </body>
 </html>
