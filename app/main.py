@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.config import OPENSANCTIONS_API_KEY, PAPPERS_API_KEY
-from app.orchestrator import ADAPTERS, run_scan, _result_to_dict
+from app.orchestrator import ADAPTERS, run_scan, run_scan_raw, _result_to_dict
 from app.resolution.claude_resolver import resolve_entities
 from app.resolution.disambiguation import extract_facets
 from app.resolution.facet_filter import apply_dismissed, apply_facet_filters
@@ -59,6 +59,23 @@ async def scan(request: ScanRequest):
         kwargs['birth_year'] = request.birth_year
 
     result = await run_scan(request.name.strip(), **kwargs)
+    return result
+
+
+@app.post('/api/v1/scan/raw')
+async def scan_raw(request: ScanRequest):
+    if not request.name.strip():
+        raise HTTPException(status_code=400, detail='name is required')
+
+    kwargs = {}
+    if request.nationality:
+        kwargs['nationality'] = request.nationality
+    if request.company:
+        kwargs['company'] = request.company
+    if request.birth_year:
+        kwargs['birth_year'] = request.birth_year
+
+    result = await run_scan_raw(request.name.strip(), **kwargs)
     return result
 
 
