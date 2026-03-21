@@ -5,6 +5,32 @@ from app.config import OPENSANCTIONS_API_KEY
 from app.models import SourceMatch, SourceResult
 
 
+def _build_summary(properties: dict, datasets: list, score: float) -> str:
+    parts = []
+
+    descriptions = properties.get('description', [])
+    if descriptions:
+        parts.append(descriptions[0])
+
+    birth_dates = properties.get('birthDate', [])
+    gender = properties.get('gender', [])
+    nationality = properties.get('nationality', [])
+
+    details = []
+    if birth_dates:
+        details.append(f'Born: {birth_dates[0]}')
+    if gender:
+        details.append(gender[0].capitalize())
+    if nationality:
+        details.append(f'Nationality: {", ".join(nationality).upper()}')
+    if details:
+        parts.append(' | '.join(details))
+
+    parts.append(f'Listed on {len(datasets)} sanctions/watchlists (score: {score:.2f})')
+
+    return '. '.join(parts)
+
+
 def _best_latin_name(names: list, fallback: str) -> str:
     if not names:
         return fallback
@@ -62,10 +88,12 @@ class OpenSanctionsAdapter(BaseAdapter):
             name = _best_latin_name(names, query)
             schema = result.get('schema', 'Entity')
 
+            summary = _build_summary(properties, datasets, score)
+
             matches.append(SourceMatch(
                 name=name,
                 type=schema.lower(),
-                summary=f'{schema} — datasets: {", ".join(datasets)} (score: {score:.2f})',
+                summary=summary,
                 url=f'https://www.opensanctions.org/entities/{result.get("id", "")}/',
                 data={
                     'schema': schema,
