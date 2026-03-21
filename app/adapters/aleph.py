@@ -36,3 +36,20 @@ class AlephAdapter(BaseAdapter):
             ))
 
         return SourceResult(source=self.name, query=query, matches=matches)
+
+    async def enrich(self, matches: list) -> list:
+        async with self._client() as client:
+            for match in matches:
+                entity_id = match.url.split('/')[-1] if match.url else ''
+                if not entity_id:
+                    continue
+                try:
+                    resp = await client.get(f'{self.BASE_URL}/entities/{entity_id}')
+                    resp.raise_for_status()
+                    detail = resp.json()
+                    match.data['properties'] = detail.get('properties', match.data.get('properties', {}))
+                    match.data['collection'] = detail.get('collection', {}).get('label', match.data.get('collection', ''))
+                    match.data['links'] = detail.get('links', {})
+                except Exception:
+                    pass
+        return matches

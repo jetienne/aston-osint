@@ -2,11 +2,15 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from app.config import OPENSANCTIONS_API_KEY, PAPPERS_API_KEY
-from app.db import create_scan, get_scan, init_db, list_scans, update_filtered_results
-from app.orchestrator import ADAPTERS, run_scan_background, run_scan_raw, _result_to_dict
+from app.db import (
+    create_scan, get_report_brief, get_report_pdf, get_scan,
+    init_db, list_scans, update_filtered_results,
+)
+from app.orchestrator import ADAPTERS, run_report_generation, run_scan_background, run_scan_raw, _result_to_dict
 from app.resolution.claude_resolver import resolve_entities
 from app.resolution.disambiguation import extract_facets
 from app.resolution.facet_filter import apply_dismissed, apply_facet_filters
@@ -145,6 +149,53 @@ async def refine(scan_id: str, request: RefineRequest):
         'sources_failed': sources_failed,
         'disambiguation': disambiguation,
     }
+
+
+@app.post('/api/v1/scan/{scan_id}/confirm')
+async def confirm(scan_id: str):
+    entry = get_scan(scan_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail='Scan not found')
+
+    if entry['status'] not in ('complete',):
+        raise HTTPException(status_code=400, detail=f'Scan must be in complete status, currently: {entry["status"]}')
+
+    filtered_data = entry.get('filtered_results', [])
+    if not filtered_data:
+        raise HTTPException(status_code=400, detail='No confirmed results to enrich')
+
+    results = _deserialize_results(filtered_data)
+    has_matches = any(r.matches for r in results)
+    if not has_matches:
+        raise HTTPException(status_code=400, detail='No matches in confirmed results')
+
+    asyncio.create_task(run_report_generation(scan_id, entry['query'], results))
+    return {'scan_id': scan_id, 'status': 'generating'}
+
+
+@app.get('/api/v1/scans/{scan_id}/report')
+def download_report(scan_id: str):
+    pdf_bytes = get_report_pdf(scan_id)
+    if not pdf_bytes:
+        raise HTTPException(status_code=404, detail='Report not found or not ready')
+
+    entry = get_scan(scan_id)
+    query_slug = entry['query'].replace(' ', '-').lower() if entry else 'report'
+    filename = f'aston-osint-{query_slug}.pdf'
+
+    return Response(
+        content=pdf_bytes,
+        media_type='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get('/api/v1/scans/{scan_id}/brief')
+def get_brief(scan_id: str):
+    brief = get_report_brief(scan_id)
+    if not brief:
+        raise HTTPException(status_code=404, detail='Brief not found or not ready')
+    return brief
 
 
 def _deserialize_results(data):

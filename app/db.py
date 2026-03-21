@@ -35,8 +35,17 @@ def init_db():
             completed_at TEXT
         )
     ''')
+    _add_column_if_missing(conn, 'scans', 'report_brief', 'TEXT')
+    _add_column_if_missing(conn, 'scans', 'report_pdf', 'BLOB')
+    _add_column_if_missing(conn, 'scans', 'report_generated_at', 'TEXT')
     conn.commit()
     conn.close()
+
+
+def _add_column_if_missing(conn, table, column, col_type):
+    cols = [row[1] for row in conn.execute(f'PRAGMA table_info({table})').fetchall()]
+    if column not in cols:
+        conn.execute(f'ALTER TABLE {table} ADD COLUMN {column} {col_type}')
 
 
 def create_scan(query, kwargs):
@@ -100,6 +109,51 @@ def update_filtered_results(scan_id, filtered_results, disambiguation):
     )
     conn.commit()
     conn.close()
+
+
+def update_scan_generating(scan_id):
+    conn = _connect()
+    conn.execute('UPDATE scans SET status = ? WHERE id = ?', ('generating', scan_id))
+    conn.commit()
+    conn.close()
+
+
+def update_scan_report_ready(scan_id, brief, pdf_bytes):
+    conn = _connect()
+    conn.execute(
+        'UPDATE scans SET status = ?, report_brief = ?, report_pdf = ?, report_generated_at = ? WHERE id = ?',
+        ('report_ready', json.dumps(brief, default=str), pdf_bytes, _now(), scan_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def update_scan_report_failed(scan_id, error):
+    conn = _connect()
+    conn.execute(
+        'UPDATE scans SET status = ?, error = ? WHERE id = ?',
+        ('report_failed', str(error), scan_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_report_pdf(scan_id):
+    conn = _connect()
+    row = conn.execute('SELECT report_pdf, status FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    conn.close()
+    if not row or row['status'] != 'report_ready':
+        return None
+    return row['report_pdf']
+
+
+def get_report_brief(scan_id):
+    conn = _connect()
+    row = conn.execute('SELECT report_brief, status FROM scans WHERE id = ?', (scan_id,)).fetchone()
+    conn.close()
+    if not row or row['status'] != 'report_ready' or not row['report_brief']:
+        return None
+    return json.loads(row['report_brief'])
 
 
 def get_scan(scan_id):
@@ -170,6 +224,7 @@ def _row_to_dict(row):
         entry['disambiguation'] = json.loads(row['disambiguation'])
     else:
         entry['disambiguation'] = {'has_ambiguous': False, 'facets': []}
+    entry['report_generated_at'] = row['report_generated_at'] if row['report_generated_at'] else None
     return entry
 
 

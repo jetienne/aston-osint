@@ -52,3 +52,42 @@ class GDELTAdapter(BaseAdapter):
             ))
 
         return SourceResult(source=self.name, query=query, matches=matches)
+
+    async def enrich(self, matches: list) -> list:
+        if not matches:
+            return matches
+        query = matches[0].data.get('title', '') or matches[0].name
+        await asyncio.sleep(2)
+        async with self._client() as client:
+            for attempt in range(3):
+                resp = await client.get(
+                    f'{self.BASE_URL}/doc/doc',
+                    params={
+                        'query': f'"{query}"',
+                        'mode': 'artlist',
+                        'format': 'json',
+                        'timespan': '12months',
+                        'maxrecords': 50,
+                        'sort': 'DateDesc',
+                    },
+                )
+                if resp.status_code == 429:
+                    await asyncio.sleep(3 * (attempt + 1))
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                articles = data.get('articles', [])
+                if articles and matches:
+                    matches[0].data['enriched_articles'] = [
+                        {
+                            'title': a.get('title', ''),
+                            'source': a.get('domain', ''),
+                            'date': a.get('seendate', ''),
+                            'url': a.get('url', ''),
+                            'tone': a.get('tone', ''),
+                            'language': a.get('language', ''),
+                        }
+                        for a in articles
+                    ]
+                break
+        return matches

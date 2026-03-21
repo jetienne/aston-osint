@@ -7,11 +7,16 @@ from app.adapters.gdelt import GDELTAdapter
 from app.adapters.icij import ICIJAdapter
 from app.adapters.opensanctions import OpenSanctionsAdapter
 from app.adapters.pappers import PappersAdapter
-from app.db import update_scan_complete, update_scan_failed, update_scan_running
+from app.db import (
+    update_scan_complete, update_scan_failed, update_scan_generating,
+    update_scan_report_failed, update_scan_report_ready, update_scan_running,
+)
 from app.models import SourceResult
+from app.report import generate_pdf
 from app.resolution.claude_resolver import resolve_entities
 from app.resolution.disambiguation import extract_facets
 from app.resolution.name_matcher import filter_results
+from app.synthesis import synthesize_brief
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +70,52 @@ async def run_scan_background(scan_id: str, query: str, **kwargs):
     except Exception as e:
         logger.error(f'Scan "{query}" failed: {e}')
         update_scan_failed(scan_id, str(e))
+
+
+ADAPTER_MAP = {a.name: a for a in ADAPTERS}
+
+
+async def run_report_generation(scan_id: str, query: str, confirmed_results: list[SourceResult]):
+    try:
+        update_scan_generating(scan_id)
+
+        tasks = []
+        for result in confirmed_results:
+            adapter = ADAPTER_MAP.get(result.source)
+            if adapter and result.matches:
+                tasks.append(_enrich_source(adapter, result))
+
+        enriched = await asyncio.gather(*tasks, return_exceptions=True)
+
+        enriched_results = []
+        for item in enriched:
+            if isinstance(item, SourceResult):
+                enriched_results.append(item)
+            elif isinstance(item, Exception):
+                logger.error(f'Enrichment failed: {item}')
+
+        if not enriched_results:
+            enriched_results = confirmed_results
+
+        brief = await synthesize_brief(query, enriched_results)
+        pdf_bytes = generate_pdf(brief)
+        update_scan_report_ready(scan_id, brief, pdf_bytes)
+        logger.info(f'Report for "{query}" generated successfully')
+
+    except Exception as e:
+        logger.error(f'Report generation for "{query}" failed: {e}')
+        update_scan_report_failed(scan_id, str(e))
+
+
+async def _enrich_source(adapter, result: SourceResult) -> SourceResult:
+    enriched_matches = await adapter.enrich(result.matches)
+    return SourceResult(
+        source=result.source,
+        query=result.query,
+        matches=enriched_matches,
+        duration_ms=result.duration_ms,
+        error=result.error,
+    )
 
 
 async def run_scan_raw(query: str, **kwargs) -> dict:

@@ -3,9 +3,12 @@ import tempfile
 from unittest.mock import patch
 
 from app.db import (
-    create_scan, get_scan, init_db, list_scans,
+    create_scan, get_scan, get_report_brief, get_report_pdf,
+    init_db, list_scans,
     update_filtered_results, update_scan_complete,
-    update_scan_failed, update_scan_running,
+    update_scan_failed, update_scan_generating,
+    update_scan_report_failed, update_scan_report_ready,
+    update_scan_running,
 )
 from app.models import SourceMatch, SourceResult
 
@@ -133,3 +136,51 @@ class TestDb:
         entry = get_scan(scan_id)
         assert len(entry['filtered_results']) == 1
         assert entry['filtered_results'][0]['matches'][0]['name'] == 'Filtered'
+
+    def test_update_scan_generating(self):
+        scan_id = create_scan('Test', {})
+        results = [SourceResult(source='test', query='Test', matches=[], duration_ms=100)]
+        update_scan_complete(scan_id, results, results, {}, [], [], 100)
+        update_scan_generating(scan_id)
+        entry = get_scan(scan_id)
+        assert entry['status'] == 'generating'
+
+    def test_update_scan_report_ready(self):
+        scan_id = create_scan('Test', {})
+        results = [SourceResult(source='test', query='Test', matches=[], duration_ms=100)]
+        update_scan_complete(scan_id, results, results, {}, [], [], 100)
+        brief = {'subject_name': 'Test', 'risk_assessment': {'level': 'LOW'}}
+        pdf_bytes = b'%PDF-fake-content'
+        update_scan_report_ready(scan_id, brief, pdf_bytes)
+        entry = get_scan(scan_id)
+        assert entry['status'] == 'report_ready'
+        assert entry['report_generated_at'] is not None
+
+    def test_get_report_pdf(self):
+        scan_id = create_scan('Test', {})
+        results = [SourceResult(source='test', query='Test', matches=[], duration_ms=100)]
+        update_scan_complete(scan_id, results, results, {}, [], [], 100)
+        pdf_bytes = b'%PDF-fake-content'
+        update_scan_report_ready(scan_id, {'subject': 'Test'}, pdf_bytes)
+        assert get_report_pdf(scan_id) == pdf_bytes
+
+    def test_get_report_pdf_not_ready(self):
+        scan_id = create_scan('Test', {})
+        assert get_report_pdf(scan_id) is None
+
+    def test_get_report_brief(self):
+        scan_id = create_scan('Test', {})
+        results = [SourceResult(source='test', query='Test', matches=[], duration_ms=100)]
+        update_scan_complete(scan_id, results, results, {}, [], [], 100)
+        brief = {'subject_name': 'Test', 'level': 'LOW'}
+        update_scan_report_ready(scan_id, brief, b'pdf')
+        assert get_report_brief(scan_id) == brief
+
+    def test_update_scan_report_failed(self):
+        scan_id = create_scan('Test', {})
+        results = [SourceResult(source='test', query='Test', matches=[], duration_ms=100)]
+        update_scan_complete(scan_id, results, results, {}, [], [], 100)
+        update_scan_report_failed(scan_id, 'Claude timeout')
+        entry = get_scan(scan_id)
+        assert entry['status'] == 'report_failed'
+        assert entry['error'] == 'Claude timeout'

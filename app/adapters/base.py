@@ -36,3 +36,6 @@ class BaseAdapter(ABC):
     @abstractmethod
     async def _search(self, query: str, **kwargs) -> SourceResult:
         pass
+
+    async def enrich(self, matches: list) -> list:
+        return matches

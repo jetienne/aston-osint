@@ -42,3 +42,20 @@ class ICIJAdapter(BaseAdapter):
             ))
 
         return SourceResult(source=self.name, query=query, matches=matches)
+
+    async def enrich(self, matches: list) -> list:
+        async with self._client() as client:
+            for match in matches:
+                node_id = match.data.get('id', '')
+                if not node_id:
+                    continue
+                try:
+                    resp = await client.get(f'{self.BASE_URL}/nodes/{node_id}')
+                    resp.raise_for_status()
+                    detail = resp.json()
+                    match.data['linked_entities'] = detail.get('linked_entities', [])
+                    match.data['jurisdiction'] = detail.get('jurisdiction', '')
+                    match.data['countries'] = detail.get('countries', [])
+                except Exception:
+                    pass
+        return matches

@@ -170,3 +170,17 @@ class PappersAdapter(BaseAdapter):
                     },
                 ))
         return matches
+
+    async def enrich(self, matches: list) -> list:
+        if not PAPPERS_API_KEY:
+            return matches
+        async with self._client() as client:
+            for match in matches:
+                for ent in match.data.get('entreprises', []):
+                    siren = ent.get('siren', '')
+                    if siren:
+                        await self._enrich_company(client, match, siren)
+                siren = match.data.get('siren', '')
+                if siren:
+                    await self._enrich_company(client, match, siren)
+        return matches

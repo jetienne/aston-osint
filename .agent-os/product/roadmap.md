@@ -48,11 +48,11 @@
 
 ### Features
 
-- [ ] Claude synthesis prompt (aggregated JSON to structured UHNW brief) `M`
-- [ ] Intelligence brief JSON schema (identity, entities, sanctions, offshore, press, risk score) `S`
-- [ ] HTML report template `M`
-- [ ] WeasyPrint PDF generation `S`
-- [ ] PDF download from web form `S`
+- [x] Claude synthesis prompt (aggregated JSON to structured UHNW brief) `M`
+- [x] Intelligence brief JSON schema (identity, entities, sanctions, offshore, press, risk score) `S`
+- [x] HTML report template `M`
+- [x] WeasyPrint PDF generation `S`
+- [x] PDF download from web form `S`
 
 ### Dependencies
 

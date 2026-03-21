@@ -16,6 +16,15 @@
     .badge-running { background: #fff3e0; color: #e65100; }
     .badge-pending { background: #f5f5f5; color: #999; }
     .badge-failed { background: #ffebee; color: #c62828; }
+    .badge-generating { background: #e3f2fd; color: #1565c0; }
+    .badge-report_ready { background: #e8f5e9; color: #1b5e20; }
+    .badge-report_failed { background: #ffebee; color: #c62828; }
+    .report-actions { margin: 16px 0; display: flex; gap: 8px; }
+    .report-actions a { display: inline-block; padding: 8px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; text-decoration: none; font-family: 'Inter', sans-serif; }
+    .report-actions .btn-download { background: #b3714f; color: #fff; }
+    .report-actions .btn-download:hover { background: #9a5f3f; }
+    .report-actions .btn-json { background: #fff; color: #5a554f; border: 1px solid #d4d0cc; }
+    .report-actions .btn-json:hover { background: #f5f5f5; }
     .scan-matches { font-size: 0.8rem; color: #5a554f; font-weight: 500; }
     .empty { color: #8b8680; padding: 40px 0; text-align: center; }
 
@@ -184,6 +193,27 @@
       toggle.appendChild(filteredBtn);
       toggle.appendChild(rawBtn);
       app.appendChild(toggle);
+
+      if (scan.status === 'report_ready') {
+        const reportActions = document.createElement('div');
+        reportActions.className = 'report-actions';
+
+        const downloadLink = document.createElement('a');
+        downloadLink.href = '/api/v1/scans/' + id + '/report';
+        downloadLink.className = 'btn-download';
+        downloadLink.textContent = 'Download Report (PDF)';
+        downloadLink.download = '';
+        reportActions.appendChild(downloadLink);
+
+        const briefLink = document.createElement('a');
+        briefLink.href = '/api/v1/scans/' + id + '/brief';
+        briefLink.className = 'btn-json';
+        briefLink.textContent = 'View Brief (JSON)';
+        briefLink.target = '_blank';
+        reportActions.appendChild(briefLink);
+
+        app.appendChild(reportActions);
+      }
 
       app.appendChild(resultsContainer);
       renderDetailResults(resultsContainer, scan.filtered_results || []);

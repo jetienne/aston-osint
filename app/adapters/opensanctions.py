@@ -104,3 +104,27 @@ class OpenSanctionsAdapter(BaseAdapter):
             ))
 
         return SourceResult(source=self.name, query=query, matches=matches)
+
+    async def enrich(self, matches: list) -> list:
+        headers = {}
+        if OPENSANCTIONS_API_KEY:
+            headers['Authorization'] = f'ApiKey {OPENSANCTIONS_API_KEY}'
+        async with self._client() as client:
+            for match in matches:
+                entity_id = match.url.rstrip('/').split('/')[-1] if match.url else ''
+                if not entity_id:
+                    continue
+                try:
+                    resp = await client.get(
+                        f'{self.BASE_URL}/entities/{entity_id}',
+                        headers=headers,
+                    )
+                    resp.raise_for_status()
+                    detail = resp.json()
+                    match.data['properties'] = detail.get('properties', match.data.get('properties', {}))
+                    match.data['datasets'] = detail.get('datasets', match.data.get('datasets', []))
+                    match.data['referents'] = detail.get('referents', [])
+                    match.data['caption'] = detail.get('caption', '')
+                except Exception:
+                    pass
+        return matches

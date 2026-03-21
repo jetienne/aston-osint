@@ -326,6 +326,91 @@
         meta.textContent += ' | ' + data.duration_ms + 'ms';
       }
       resultsEl.appendChild(meta);
+
+      if (totalMatches > 0 && scanId) {
+        const reportSection = document.createElement('div');
+        reportSection.className = 'report-section';
+
+        const reportBtn = document.createElement('button');
+        reportBtn.className = 'btn-primary btn-report';
+        reportBtn.textContent = 'Generate Report (PDF)';
+        reportBtn.addEventListener('click', () => generateReport(scanId, reportSection));
+        reportSection.appendChild(reportBtn);
+
+        resultsEl.appendChild(reportSection);
+      }
+    }
+
+    async function generateReport(id, container) {
+      container.textContent = '';
+
+      const progress = document.createElement('div');
+      progress.className = 'report-progress';
+      progress.textContent = 'Confirming identity and enriching data...';
+      container.appendChild(progress);
+
+      try {
+        const resp = await fetch('/api/v1/scan/' + id + '/confirm', { method: 'POST' });
+        if (!resp.ok) {
+          const err = await resp.json();
+          progress.textContent = 'Error: ' + (err.detail || 'Failed to start report generation');
+          return;
+        }
+
+        pollReport(id, container, progress);
+      } catch (err) {
+        progress.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    function pollReport(id, container, progress) {
+      const steps = [
+        'Enriching data from all sources...',
+        'Synthesizing intelligence brief with Claude...',
+        'Generating PDF report...',
+      ];
+      let stepIndex = 0;
+
+      const stepInterval = setInterval(() => {
+        stepIndex = Math.min(stepIndex + 1, steps.length - 1);
+        progress.textContent = steps[stepIndex];
+      }, 5000);
+
+      const interval = setInterval(async () => {
+        try {
+          const resp = await fetch('/api/v1/scans/' + id);
+          const data = await resp.json();
+
+          if (data.status === 'report_ready') {
+            clearInterval(interval);
+            clearInterval(stepInterval);
+            container.textContent = '';
+
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = '/api/v1/scans/' + id + '/report';
+            downloadBtn.className = 'btn-primary btn-report';
+            downloadBtn.textContent = 'Download Report (PDF)';
+            downloadBtn.download = '';
+            container.appendChild(downloadBtn);
+
+            const viewBtn = document.createElement('a');
+            viewBtn.href = '/api/v1/scans/' + id + '/brief';
+            viewBtn.className = 'btn-secondary btn-brief';
+            viewBtn.textContent = 'View Brief (JSON)';
+            viewBtn.target = '_blank';
+            container.appendChild(viewBtn);
+
+          } else if (data.status === 'report_failed') {
+            clearInterval(interval);
+            clearInterval(stepInterval);
+            progress.textContent = 'Report generation failed: ' + (data.error || 'Unknown error');
+          }
+        } catch (err) {
+          clearInterval(interval);
+          clearInterval(stepInterval);
+          progress.textContent = 'Error polling: ' + err.message;
+        }
+      }, 2000);
     }
 
     const SOURCES = [

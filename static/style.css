@@ -522,3 +522,46 @@ button:disabled {
     width: 100%;
   }
 }
+
+.report-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e1dd;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-report {
+  display: inline-block;
+  padding: 10px 24px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-brief {
+  display: inline-block;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  text-decoration: none;
+  background: #fff;
+  color: #5a554f;
+  border: 1px solid #d4d0cc;
+  margin-left: 8px;
+}
+
+.btn-brief:hover {
+  background: #f5f5f5;
+}
+
+.report-progress {
+  font-size: 0.85rem;
+  color: #5a554f;
+  padding: 12px 0;
+}

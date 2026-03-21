@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Intelligence Brief — {{ brief.subject_name }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+    @bottom-center {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 9px;
+      color: #888;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+
+  .header {
+    border-bottom: 3px solid #1a1a1a;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .header .subtitle {
+    font-size: 13px;
+    color: #555;
+  }
+
+  .header .meta {
+    font-size: 9px;
+    color: #888;
+    margin-top: 8px;
+  }
+
+  .confidential {
+    display: inline-block;
+    background: #dc3545;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-size: 14px;
+    font-weight: 700;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+    margin: 20px 0 10px 0;
+    color: #1a1a1a;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+    font-size: 10px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 5px 8px;
+    border-bottom: 1px solid #eee;
+  }
+
+  th {
+    background: #f5f5f5;
+    font-weight: 600;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #555;
+  }
+
+  .risk-box {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+
+  .risk-LOW { background: #d4edda; border-left: 4px solid #28a745; }
+  .risk-MEDIUM { background: #fff3cd; border-left: 4px solid #ffc107; }
+  .risk-HIGH { background: #f8d7da; border-left: 4px solid #dc3545; }
+  .risk-CRITICAL { background: #dc3545; color: #fff; border-left: 4px solid #721c24; }
+
+  .risk-box .level {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .risk-box .summary {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .risk-box ul {
+    margin: 8px 0 0 16px;
+    font-size: 10px;
+  }
+
+  .section-empty {
+    color: #888;
+    font-style: italic;
+    font-size: 10px;
+    margin-bottom: 12px;
+  }
+
+  .article-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .article-list li {
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 10px;
+  }
+
+  .article-list .source-tag {
+    color: #888;
+    font-size: 9px;
+  }
+
+  .footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+    font-size: 9px;
+    color: #888;
+  }
+
+  .footer .sources {
+    margin-bottom: 8px;
+  }
+
+  .footer .gaps {
+    color: #c00;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="confidential">Confidential</div>
+  <h1>Intelligence Brief</h1>
+  <div class="subtitle">{{ brief.subject_name }}</div>
+  <div class="meta">Generated {{ brief.generated_at[:10] }} | Aston OSINT Pipeline</div>
+</div>
+
+<!-- Risk Assessment -->
+<h2>Risk Assessment</h2>
+{% if brief.risk_assessment %}
+<div class="risk-box risk-{{ brief.risk_assessment.level }}">
+  <div class="level">{{ brief.risk_assessment.level }} RISK</div>
+  <div class="summary">{{ brief.risk_assessment.summary }}</div>
+  {% if brief.risk_assessment.factors %}
+  <ul>
+    {% for factor in brief.risk_assessment.factors %}
+    <li>{{ factor }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Identity -->
+<h2>Identity</h2>
+{% if brief.identity %}
+<table>
+  <tr><th style="width:140px">Full Name</th><td>{{ brief.identity.full_name }}</td></tr>
+  {% if brief.identity.aliases %}
+  <tr><th>Aliases</th><td>{{ brief.identity.aliases | join(', ') }}</td></tr>
+  {% endif %}
+  {% if brief.identity.birth_date %}
+  <tr><th>Date of Birth</th><td>{{ brief.identity.birth_date }}</td></tr>
+  {% endif %}
+  {% if brief.identity.nationalities %}
+  <tr><th>Nationalities</th><td>{{ brief.identity.nationalities | join(', ') }}</td></tr>
+  {% endif %}
+  {% if brief.identity.addresses %}
+  <tr><th>Addresses</th><td>{{ brief.identity.addresses | join('; ') }}</td></tr>
+  {% endif %}
+</table>
+{% endif %}
+
+<!-- Corporate Network -->
+<h2>Corporate Network</h2>
+{% if brief.corporate_network %}
+<table>
+  <tr>
+    <th>Company</th>
+    <th>SIREN</th>
+    <th>Role</th>
+    <th>Status</th>
+    <th>Ownership</th>
+  </tr>
+  {% for co in brief.corporate_network %}
+  <tr>
+    <td>{{ co.company_name }}</td>
+    <td>{{ co.siren or '—' }}</td>
+    <td>{{ co.role }}</td>
+    <td>{{ co.status or '—' }}</td>
+    <td>{% if co.beneficial_ownership_pct %}{{ co.beneficial_ownership_pct }}%{% else %}—{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="section-empty">No corporate network data found.</p>
+{% endif %}
+
+<!-- Sanctions & PEP -->
+<h2>Sanctions &amp; PEP Exposure</h2>
+{% if brief.sanctions_pep %}
+<table>
+  <tr>
+    <th>Source</th>
+    <th>Program</th>
+    <th>Listed Since</th>
+    <th>Details</th>
+  </tr>
+  {% for sp in brief.sanctions_pep %}
+  <tr>
+    <td>{{ sp.source }}</td>
+    <td>{{ sp.program }}</td>
+    <td>{{ sp.listed_since or '—' }}</td>
+    <td>{{ sp.details }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="section-empty">No sanctions or PEP listings found.</p>
+{% endif %}
+
+<!-- Offshore -->
+<h2>Offshore Connections</h2>
+{% if brief.offshore %}
+<table>
+  <tr>
+    <th>Entity</th>
+    <th>Jurisdiction</th>
+    <th>Role</th>
+    <th>Dataset</th>
+  </tr>
+  {% for off in brief.offshore %}
+  <tr>
+    <td>{{ off.entity_name }}</td>
+    <td>{{ off.jurisdiction }}</td>
+    <td>{{ off.role }}</td>
+    <td>{{ off.dataset }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p class="section-empty">No offshore connections found.</p>
+{% endif %}
+
+<!-- Press Coverage -->
+<h2>Press Coverage</h2>
+{% if brief.press_coverage %}
+<ul class="article-list">
+  {% for art in brief.press_coverage[:15] %}
+  <li>
+    <strong>{{ art.title }}</strong><br>
+    <span class="source-tag">{{ art.source }} — {{ art.date }} — {{ art.sentiment }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% if brief.press_coverage | length > 15 %}
+<p class="section-empty">... and {{ brief.press_coverage | length - 15 }} more articles.</p>
+{% endif %}
+{% else %}
+<p class="section-empty">No press coverage found.</p>
+{% endif %}
+
+<!-- Footer -->
+<div class="footer">
+  <div class="sources">
+    <strong>Sources consulted:</strong>
+    {{ brief.sources_consulted | join(', ') if brief.sources_consulted else 'None' }}
+  </div>
+  {% if brief.data_gaps %}
+  <div class="gaps">
+    <strong>Data gaps:</strong>
+    {{ brief.data_gaps | join('; ') }}
+  </div>
+  {% endif %}
+</div>
+
+</body>
+</html>
