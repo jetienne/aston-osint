@@ -8,6 +8,8 @@ class SourceMatch:
     summary: str
     url: str
     data: dict = field(default_factory=dict)
+    confidence: str | None = None
+    rationale: str | None = None
 
 
 @dataclass

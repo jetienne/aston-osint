@@ -140,6 +140,15 @@
             summary.textContent = m.summary;
             match.appendChild(summary);
 
+            if (m.confidence) {
+              const conf = document.createElement('div');
+              conf.style.fontSize = '0.75rem';
+              const colors = { HIGH: '#0a0', MEDIUM: '#f90', LOW: '#c00' };
+              conf.style.color = colors[m.confidence] || '#999';
+              conf.textContent = m.confidence + (m.rationale ? ' — ' + m.rationale : '');
+              match.appendChild(conf);
+            }
+
             if (m.url) {
               const link = document.createElement('a');
               link.href = m.url;
