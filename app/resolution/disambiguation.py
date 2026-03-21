@@ -59,20 +59,22 @@ def extract_facets(results: list[SourceResult]) -> dict:
                             'detail': ' — '.join(details) if details else '',
                         }
 
+    total_matches = sum(len(r.matches) for r in results)
+
     facets = []
-    if len(countries) >= 2:
+    if len(countries) >= 2 or (len(countries) >= 1 and _count_matches_with_field(results, 'country') < total_matches):
         facets.append({
             'field': 'country',
             'label': 'Country',
             'options': [{'value': c, 'label': c} for c in sorted(countries)],
         })
-    if len(birth_years) >= 2:
+    if len(birth_years) >= 2 or (len(birth_years) >= 1 and _count_matches_with_field(results, 'birth_year') < total_matches):
         facets.append({
             'field': 'birth_year',
             'label': 'Birth year',
             'options': [{'value': y, 'label': y} for y in sorted(birth_years)],
         })
-    if len(companies) >= 2:
+    if len(companies) >= 2 or (len(companies) >= 1 and _count_matches_with_field(results, 'company') < total_matches):
         facets.append({
             'field': 'company',
             'label': 'Company',
@@ -89,6 +91,37 @@ def extract_facets(results: list[SourceResult]) -> dict:
         'has_ambiguous': has_ambiguous,
         'facets': facets,
     }
+
+
+def _count_matches_with_field(results, field):
+    count = 0
+    for result in results:
+        for match in result.matches:
+            data = match.data
+            properties = data.get('properties', {})
+            has_value = False
+
+            if field == 'country':
+                for key in ('nationality', 'country', 'jurisdiction', 'country_codes'):
+                    val = properties.get(key) or data.get(key)
+                    if val and (isinstance(val, str) or any(v for v in val)):
+                        has_value = True
+                        break
+            elif field == 'birth_year':
+                for key in ('birthDate', 'birth_year', 'date_naissance'):
+                    val = properties.get(key) or data.get(key)
+                    if val:
+                        has_value = True
+                        break
+            elif field == 'company':
+                for key in ('entreprises', 'companies'):
+                    if data.get(key):
+                        has_value = True
+                        break
+
+            if has_value:
+                count += 1
+    return count
 
 
 def _extract_year(val) -> str | None:

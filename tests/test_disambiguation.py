@@ -126,13 +126,16 @@ class TestExtractFacets:
         country_facet = next(f for f in facets if f['field'] == 'country')
         assert 'Russia' in _option_values(country_facet)
 
-    def test_ignores_empty_values(self):
+    def test_empty_values_not_included_in_options(self):
         results = [_result([
             _match('A', {'properties': {'nationality': ['']}}),
             _match('B', {'properties': {'nationality': ['France']}}),
         ])]
         facets = extract_facets(results)['facets']
-        assert not any(f['field'] == 'country' for f in facets)
+        country_facet = next(f for f in facets if f['field'] == 'country')
+        values = _option_values(country_facet)
+        assert '' not in values
+        assert 'France' in values
 
     def test_options_are_sorted(self):
         results = [_result([
