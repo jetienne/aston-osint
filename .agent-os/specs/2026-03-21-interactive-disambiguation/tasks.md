@@ -12,12 +12,12 @@
   - [x] 2.2 Update POST /api/v1/scan response to include disambiguation facets
   - [x] 2.3 Write tests for facet extraction (20 tests)
 
-- [ ] 3. Refine endpoint
-  - [ ] 3.1 Add POST /api/v1/scan/{scan_id}/refine endpoint
-  - [ ] 3.2 Apply facet filters (OR within facet, AND across facets)
-  - [ ] 3.3 Handle dismissed match indices
-  - [ ] 3.4 Re-run Claude entity resolution on filtered set
-  - [ ] 3.5 Write tests for refine endpoint
+- [x] 3. Refine endpoint
+  - [x] 3.1 Add POST /api/v1/scan/{scan_id}/refine endpoint
+  - [x] 3.2 Apply facet filters (OR within facet, AND across facets)
+  - [x] 3.3 Handle dismissed match indices
+  - [x] 3.4 Re-run Claude entity resolution on filtered set
+  - [x] 3.5 Write tests for facet filter and dismiss (15 tests)
 
 - [ ] 4. UI: match cards with accept/dismiss
   - [ ] 4.1 Redesign match display as cards with confidence badge
